@@ -1,7 +1,7 @@
-drop table doExercise;
-drop table user;
-drop table account;
-drop table exercise;
+drop table if exists doExercise;
+drop table if exists user;
+drop table if exists account;
+drop table if exists exercise;
 
 create table exercise(
     id integer primary key,

@@ -3,13 +3,7 @@ from pydantic import BaseModel
 
 class ExerciseBase(BaseModel):
     title: str
-    text: str
-    category: str
     complexity: float | None = 0.0
-
-
-class ExerciseCreate(ExerciseBase):
-    pass
 
 
 class Exercise(ExerciseBase):
@@ -17,3 +11,12 @@ class Exercise(ExerciseBase):
 
     class Config:
         from_attributes = True
+
+
+class ExerciseFull(Exercise):
+    text: str
+
+
+class ExerciseCreate(ExerciseBase):
+    text: str
+

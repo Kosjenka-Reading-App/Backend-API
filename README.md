@@ -25,6 +25,14 @@ FastAPI generated docs: http://127.0.0.1:8000/docs
 ReDoc generated docs: http://127.0.0.1:8000/redoc
 
 
+# Testing
+
+Launch tests with
+```
+pytest
+```
+
+
 # Sources
 
 1. Using SQL databases in fastAPI: https://fastapi.tiangolo.com/tutorial/sql-databases/
