@@ -47,7 +47,7 @@ def delete_exercise(exercise_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/exercises/{exercise_id}")
-def update_exercise(exercise_id: int, exercise: schemas.ExerciseFull, db: Session = Depends(get_db)):
+def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Session = Depends(get_db)):
     updated_exercise = crud.update_exercise(db, exercise_id=exercise_id, exercise=exercise)
     if updated_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")

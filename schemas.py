@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -19,4 +21,10 @@ class ExerciseFull(Exercise):
 
 class ExerciseCreate(ExerciseBase):
     text: str
+
+
+class ExercisePatch(ExerciseBase):
+    title: Optional[str] = None
+    text: Optional[str] = None
+    complexity: Optional[float] = None
 
