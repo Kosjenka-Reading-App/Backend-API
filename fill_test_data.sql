@@ -6,8 +6,8 @@ insert into exercise (id,title,text,complexity) values
     (5,"Finn the human","Finn is unimagenably sad and stressed. Finn's got a thesis to write. Finn doesn't have a thesis advisor.",9000.0);
 
 insert into account (id_account,password,is_user,is_super_admin) values
-    (1,"qwerty",true,false),
-    (2,"asdfgh",true,false),
-    (3,"123456",false,false),
-    (4,"zxcvbn",false,false),
-    (5,"uiop[]",false,true);
+    (1,"a@gmail.com","qwerty",true,false),
+    (2,"b@gmail.com","asdfgh",true,false),
+    (3,"c@gmail.com","123456",false,false),
+    (4,"d@gmail.com","zxcvbn",false,false),
+    (5,"e@gmail.com","uiop[]",false,true);
