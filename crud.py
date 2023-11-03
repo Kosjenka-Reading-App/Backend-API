@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 import models, schemas
-
+import bcrypt
 
 def get_exercise(db: Session, exercise_id: int):
     return db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
@@ -39,3 +39,19 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     db.refresh(stored_exercise)
     return stored_exercise
 
+def password_hasher(raw_password:str):
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(raw_password.encode('utf-8'), salt)
+    return hashed_password.decode('utf-8')
+
+def save_user(db: Session,account_in:schemas.AccountIn):
+    hashed_password = password_hasher(account_in.password)
+    account_db = models.Account(
+        email=account_in.email, 
+        is_user=account_in.is_user,
+        is_super_admin=account_in.is_super_admin,
+        password=hashed_password)
+    db.add(account_db)
+    db.commit()
+    db.refresh(account_db)
+    return account_db

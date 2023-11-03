@@ -53,3 +53,14 @@ def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Sessi
         raise HTTPException(status_code=404, detail="exercise not found")
     return updated_exercise
 
+@app.post("/accounts/", response_model=schemas.AccountOut)
+def create_account(account_in: schemas.AccountIn,db: Session = Depends(get_db)):
+    account_saved= crud.save_user(db,account_in)
+    return account_saved
+
+@app.get("/accounts/", response_model=list[schemas.AccountOut])
+def get_all_accounts(db: Session = Depends(get_db)):
+    accounts = db.query(models.Account).all()
+    if not accounts:
+        return []
+    return accounts

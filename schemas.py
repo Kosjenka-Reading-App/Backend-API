@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class ExerciseBase(BaseModel):
@@ -28,3 +28,13 @@ class ExercisePatch(ExerciseBase):
     text: Optional[str] = None
     complexity: Optional[float] = None
 
+class AccountIn(BaseModel) :
+    email: EmailStr
+    password: str
+    is_user: bool
+    is_super_admin: bool
+
+class AccountOut(BaseModel) :
+    email: EmailStr
+    is_user: bool
+    is_super_admin: bool
