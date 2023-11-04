@@ -27,9 +27,13 @@ ReDoc generated docs: http://127.0.0.1:8000/redoc
 
 # Testing
 
-Launch tests with
+Make sure the local server is running
 ```
-pytest
+uvicorn main:app
+```
+Launch tests from the root directory with
+```
+python3 -m pytest
 ```
 
 
