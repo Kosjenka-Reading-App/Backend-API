@@ -37,8 +37,6 @@ def delete_exercise(db: Session, exercise_id: int):
 
 def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePatch):
     stored_exercise = db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
-    if stored_exercise is None:
-        return None
     update_data = exercise.model_dump(exclude_unset=True)
     for key in update_data:
         setattr(stored_exercise, key, update_data[key])
