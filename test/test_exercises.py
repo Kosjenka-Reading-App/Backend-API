@@ -33,14 +33,14 @@ def test_create_exercise_without_complexity():
 
 def test_get_exercises():
     exercises = client.get('http://localhost:8000/exercises').json()
-    assert set(exercises[0].keys()) == {'id', 'title', 'complexity'}
+    assert set(exercises[0].keys()) == {'id', 'title', 'complexity', 'category'}
 
 
 def test_get_exercise():
     exercises = client.get('http://localhost:8000/exercises').json()
     exercise_id = exercises[0]['id']
     exercise = client.get(f'http://localhost:8000/exercises/{exercise_id}').json()
-    assert set(exercise.keys()) == {'id', 'title', 'complexity', 'text'}
+    assert set(exercise.keys()) == {'id', 'title', 'category', 'complexity', 'text'}
 
 
 def test_update_exercise():

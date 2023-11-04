@@ -1,7 +1,9 @@
+drop table if exists exercise_category;
 drop table if exists doExercise;
 drop table if exists user;
 drop table if exists account;
 drop table if exists exercise;
+drop table if exists category;
 
 create table exercise(
     id integer primary key,
@@ -31,3 +33,12 @@ create table doExercise(
     position int,
     completion float
 );
+
+create table category(
+    category varchar primary key
+);
+
+create table exercise_category(
+    exercise_id integer not null references exercise(id),
+    category varchar not null references category(category)
+)
