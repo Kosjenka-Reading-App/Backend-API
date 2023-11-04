@@ -1,3 +1,4 @@
+from uuid import UUID
 from sqlalchemy.orm import Session
 
 import models, schemas
@@ -55,3 +56,21 @@ def save_user(db: Session,account_in:schemas.AccountIn):
     db.commit()
     db.refresh(account_db)
     return account_db
+
+def get_account(db: Session, account_id: int):
+    return db.query(models.Account).filter(models.Account.id_account == account_id).first()
+
+def delete_account(db: Session, account_id: UUID):
+    db.delete(db.query(models.Account).filter(models.Account.id_account == account_id).first())
+    db.commit()
+
+def update_account(db: Session, account_id: int, account: schemas.AccountOut):
+    stored_account = db.query(models.Account).filter(models.Account.id_account == account_id).first()
+    if stored_account is None:
+        return None
+    update_data = account.model_dump(exclude_unset=True)
+    for key in update_data:
+        setattr(stored_account, key, update_data[key])
+    db.commit()
+    db.refresh(stored_account)
+    return stored_account

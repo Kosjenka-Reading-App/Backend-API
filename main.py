@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
@@ -64,3 +65,19 @@ def get_all_accounts(db: Session = Depends(get_db)):
     if not accounts:
         return []
     return accounts
+
+@app.delete("/accounts/{account_id}")
+def delete_account(account_id: UUID, db: Session = Depends(get_db)):
+    db_account = crud.get_account(db, account_id=account_id)
+    if db_account is None:
+        raise HTTPException(status_code=404, detail="account not found")
+    crud.delete_account(db=db, account_id=account_id)
+    return {"message": "account deleted"}
+
+
+@app.patch("/accounts/{account_id}")
+def update_account(account_id: int, account: schemas.AccountIn, db: Session = Depends(get_db)):
+    updated_account = crud.update_account(db, account_id=account_id, account=account)
+    if updated_account is None:
+        raise HTTPException(status_code=404, detail="account not found")
+    return updated_account

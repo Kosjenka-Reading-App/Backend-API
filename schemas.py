@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, UUID4
 
 
 class ExerciseBase(BaseModel):
@@ -35,6 +35,7 @@ class AccountIn(BaseModel) :
     is_super_admin: bool
 
 class AccountOut(BaseModel) :
+    id_account: UUID4
     email: EmailStr
     is_user: bool
     is_super_admin: bool
