@@ -58,6 +58,20 @@ def test_update_exercise():
         assert updated_exercise[key] == original_exercise[key]
 
 
+def test_sort_exercises():
+    exercises = requests.get('http://localhost:8000/exercises?order_by=id')
+    assert exercises.status_code == 404
+    exercises = requests.get('http://localhost:8000/exercises?order_by=complexity').json()
+    complexities = [exercise['complexity'] for exercise in exercises]
+    assert complexities == sorted(complexities)
+
+
+def test_search_exercises():
+    exercises = requests.get('http://localhost:8000/exercises?title_like=another').json()
+    for exercise in exercises:
+        assert exercise['title'] == 'Title of another exercise'
+
+
 def test_delete_exercise():
     exercises = requests.get('http://localhost:8000/exercises').json()
     assert len(exercises) > 0
