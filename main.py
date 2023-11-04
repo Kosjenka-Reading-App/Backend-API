@@ -1,7 +1,9 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
-import crud, models, schemas
+import crud
+import models
+import schemas
 from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -16,6 +18,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+@app.get("/healthz", status_code=200)
+def health_check():
+    return {"status": "ok"}
 
 
 @app.post("/exercises/", response_model=schemas.ExerciseFull)
@@ -48,8 +55,8 @@ def delete_exercise(exercise_id: int, db: Session = Depends(get_db)):
 
 @app.patch("/exercises/{exercise_id}")
 def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Session = Depends(get_db)):
-    updated_exercise = crud.update_exercise(db, exercise_id=exercise_id, exercise=exercise)
+    updated_exercise = crud.update_exercise(
+        db, exercise_id=exercise_id, exercise=exercise)
     if updated_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
     return updated_exercise
-
