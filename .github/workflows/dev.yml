@@ -3,7 +3,7 @@ name: Build and Publish Production Docker Images
 on:
   push:
     branches:
-      - devops/deployments
+      - dev
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -44,4 +44,4 @@ jobs:
           # TODO: postgres build-args: BACKEND_URL=${{ secrets.BACKEND_URL_DEV }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --local-only --image ghcr.io/dostini/api:devops-deployments
+      - run: flyctl deploy --local-only --image ghcr.io/dostini/api:dev
