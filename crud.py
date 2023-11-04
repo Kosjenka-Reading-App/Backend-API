@@ -7,8 +7,15 @@ def get_exercise(db: Session, exercise_id: int):
     return db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
 
 
-def get_exercises(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Exercise).offset(skip).limit(limit).all()
+def get_exercises(db: Session, skip: int = 0, limit: int = 100, order_by: str = "", title_like: str = ""):
+    exercises = db.query(models.Exercise)
+    if title_like:
+        exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+    if order_by:
+        match order_by:
+            case "complexity":
+                exercises = exercises.order_by(models.Exercise.complexity)
+    return exercises.offset(skip).limit(limit).all()
 
 
 def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
