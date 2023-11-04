@@ -9,6 +9,9 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
+exercise_order_by = {"", "complexity"}
+
+
 # Dependency
 def get_db():
     db = SessionLocal()
@@ -24,8 +27,10 @@ def create_exercise(exercise: schemas.ExerciseCreate, db: Session = Depends(get_
 
 
 @app.get("/exercises/", response_model=list[schemas.Exercise])
-def read_exercises(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    exercises = crud.get_exercises(db, skip=skip, limit=limit)
+def read_exercises(skip: int = 0, limit: int = 100, order_by: str = "", title_like: str = "", db: Session = Depends(get_db)):
+    if order_by not in exercise_order_by:
+        raise HTTPException(status_code=404, detail=f"order_by must be one of {exercise_order_by}")
+    exercises = crud.get_exercises(db, skip=skip, limit=limit, order_by=order_by, title_like=title_like)
     return exercises
 
 
