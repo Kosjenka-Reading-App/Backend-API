@@ -1,11 +1,16 @@
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
+
+
+class Category(BaseModel):
+    category: str
 
 
 class ExerciseBase(BaseModel):
     title: str
     complexity: float | None = 0.0
+    category: List[str] = []
 
 
 class Exercise(ExerciseBase):

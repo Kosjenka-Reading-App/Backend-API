@@ -59,3 +59,35 @@ def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Sessi
     updated_exercise = crud.update_exercise(db, exercise_id=exercise_id, exercise=exercise)
     return updated_exercise
 
+
+@app.post("/categories/{category}", response_model=schemas.Category)
+def create_category(category: str, db: Session = Depends(get_db)):
+    stored_category = crud.get_category(db, category=category)
+    if stored_category is not None:
+        raise HTTPException(status_code=404, detail="category already exists")
+    return crud.create_category(db=db, category=category)
+
+
+@app.get("/categories/", response_model=list[str])
+def read_categories(db: Session = Depends(get_db)):
+    db_categories = crud.get_categories(db)
+    return db_categories
+
+
+@app.delete("/categories/{category}")
+def delete_category(category: str, db: Session = Depends(get_db)):
+    db_category = crud.get_category(db, category=category)
+    if db_category is None:
+        raise HTTPException(status_code=404, detail="category not found")
+    crud.delete_category(db, category=category)
+    return {"ok": True}
+
+
+@app.patch("/categories/{old_category}", response_model=schemas.Category)
+def update_category(old_category: str, new_category: schemas.Category, db: Session = Depends(get_db)):
+    stored_category = crud.get_category(db, category=old_category)
+    if stored_category is None:
+        raise HTTPException(status_code=404, detail="category not found")
+    updated_category = crud.update_category(db, old_category=old_category, new_category=new_category)
+    return updated_category
+

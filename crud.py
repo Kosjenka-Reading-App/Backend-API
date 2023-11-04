@@ -44,3 +44,34 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     db.refresh(stored_exercise)
     return stored_exercise
 
+
+def get_categories(db: Session):
+    return [cat.category for cat in db.query(models.Category).all()]
+
+
+def get_category(db: Session, category: str):
+    return db.query(models.Category).filter(models.Category.category == category).first()
+
+
+def create_category(db: Session, category: str):
+    db_category = models.Category(
+        category=category,
+    )
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+    return db_category
+
+
+def delete_category(db: Session, category: str):
+    db.delete(db.query(models.Category).filter(models.Category.category == category).first())
+    db.commit()
+
+
+def update_category(db: Session, old_category: str, new_category: schemas.Category):
+    stored_category = db.query(models.Category).filter(models.Category.category == old_category).first()
+    setattr(stored_category, 'category', new_category.category)
+    db.commit()
+    db.refresh(stored_category)
+    return stored_category
+
