@@ -15,3 +15,11 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements.txt
       - run: python3 -m pytest
+
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: rickstaa/action-black@v1
+        with:
+          black_args: ". --check"
