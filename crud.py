@@ -1,4 +1,4 @@
-from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 import models, schemas
@@ -60,7 +60,7 @@ def save_user(db: Session,account_in:schemas.AccountIn):
 def get_account(db: Session, account_id: int):
     return db.query(models.Account).filter(models.Account.id_account == account_id).first()
 
-def delete_account(db: Session, account_id: UUID):
+def delete_account(db: Session, account_id: int):
     db.delete(db.query(models.Account).filter(models.Account.id_account == account_id).first())
     db.commit()
 

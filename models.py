@@ -1,5 +1,3 @@
-import uuid
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, Integer, String, Float, Boolean
 
 from database import Base
@@ -17,7 +15,7 @@ class Exercise(Base):
 class Account(Base):
     __tablename__ = "account"
 
-    id_account = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id_account = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String, unique=True)
     password = Column(String)
     is_user = Column(Boolean)
