@@ -13,9 +13,5 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      - run: cat setup.sql | sqlite3 db.sqlite
       - run: pip install -r requirements.txt
-      - run: nohup venv/bin/uvicorn main:app &
-      - run: sleep 3
       - run: python3 -m pytest
-      - run: ps -ef | grep "uvicorn main:app" | grep -v grep | awk '{print $2}' | xargs kill
