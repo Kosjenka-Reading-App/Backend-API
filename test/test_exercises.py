@@ -1,5 +1,4 @@
 from conftest import client
-from main import app
 
 
 def test_create_exercise():
