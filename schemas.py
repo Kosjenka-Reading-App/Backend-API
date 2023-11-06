@@ -34,3 +34,8 @@ class UserSchema(BaseModel):
     id_account :int
     username : str
     proficiency : float | None = 0.0  
+
+class UserCreate(BaseModel):
+    id_account : int
+    username : str
+    proficiency : float | None = 0.0  

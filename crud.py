@@ -56,3 +56,18 @@ def update_user(db: Session, user_id: int, user: schemas.UserSchema):
     db.commit()
     db.refresh(user_id)
     return user_id
+
+def delete_user(db: Session, user_id: int):
+    db.delete(db.query(models.User).filter(models.User.id_user == user_id).first())
+    db.commit()
+    
+def create_user(db: Session, user: schemas.UserCreate):
+    db_user = models.User(
+        id_account = user.id_account,
+        username = user.username, 
+        proficiency = user.proficiency,
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user

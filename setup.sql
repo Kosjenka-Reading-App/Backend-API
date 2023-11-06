@@ -18,7 +18,7 @@ create table account(
 );
 
 create table user(
-    id_user primary key,
+    id_user integer primary key,
     id_account references account(id_account),
     username varchar,
     proficiency float
