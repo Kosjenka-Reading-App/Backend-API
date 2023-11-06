@@ -45,3 +45,14 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id_user == user_id).first()
+
+def update_user(db: Session, user_id: int, user: schemas.UserSchema):
+    user_id = db.query(models.User).filter(models.User.id_user == user_id).first()
+    if user_id is None:
+        return None
+    update_data = user.model_dump(exclude_unset=True)
+    for key in update_data:
+        setattr(user_id, key, update_data[key])
+    db.commit()
+    db.refresh(user_id)
+    return user_id
