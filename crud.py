@@ -46,7 +46,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id_user == user_id).first()
 
-def update_user(db: Session, user_id: int, user: schemas.UserSchema):
+def update_user(db: Session, user_id: int, user: schemas.UserPatch):
     user_id = db.query(models.User).filter(models.User.id_user == user_id).first()
     if user_id is None:
         return None
