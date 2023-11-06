@@ -11,3 +11,10 @@ insert into account (id_account,password,is_user,is_super_admin) values
     (3,"123456",false,false),
     (4,"zxcvbn",false,false),
     (5,"uiop[]",false,true);
+
+insert into user (id_user,id_account,username,proficiency) values
+    (1,1,"UserNameqwerty",null),
+    (2,2,"UserNameasdfgh",2.0),
+    (3,3,"UserName123456",3.3),
+    (4,4,"UserNamezxcvbn",4.0),
+    (5,5,"UserNameuiop[]",5.0);
