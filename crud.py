@@ -39,3 +39,6 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     db.refresh(stored_exercise)
     return stored_exercise
 
+#Users
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.User).offset(skip).limit(limit).all()

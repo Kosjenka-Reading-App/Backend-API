@@ -28,3 +28,9 @@ class ExercisePatch(ExerciseBase):
     text: Optional[str] = None
     complexity: Optional[float] = None
 
+#Users
+class UserSchema(BaseModel):
+    id_user : int
+    id_account :int
+    username : str
+    proficiency : float | None = 0.0  

@@ -53,3 +53,8 @@ def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Sessi
         raise HTTPException(status_code=404, detail="exercise not found")
     return updated_exercise
 
+#User
+@app.get("/users/", response_model=list[schemas.UserSchema])
+def read_all_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    users = crud.get_users(db, skip=skip, limit=limit)
+    return users
