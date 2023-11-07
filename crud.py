@@ -81,18 +81,19 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     db.refresh(stored_exercise)
     return stored_exercise
 
-
-def password_hasher(raw_password: str):
+#Accounts
+def password_hasher(raw_password:str):
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(raw_password.encode("utf-8"), salt)
     return hashed_password.decode("utf-8")
 
 
-def get_account(db: Session, account_id: int):
-    return (
-        db.query(models.Account).filter(models.Account.id_account == account_id).first()
-    )
-
+def get_account(db: Session, auth_user: schemas.AuthSchema, account_id: int):
+    if(models.AccountTyp(auth_user.account_category) == models.AccountTyp.Superadmin):
+        return db.query(models.Account).filter(models.Account.id_account == account_id, models.Account.account_category == models.AccountTyp.Admin).first()
+    if(auth_user.account_id == account_id):
+        return db.query(models.Account).filter(models.Account.id_account == account_id).first()
+    return None
 
 def delete_account(db: Session, account_id: int):
     db.delete(
@@ -114,17 +115,15 @@ def update_account(db: Session, account_id: int, account: schemas.AccountOut):
 
 
 def get_accounts(db: Session):
-    return db.query(models.Account).all()
+    return db.query(models.Account).filter(models.Account.account_category == models.AccountTyp.Admin).all()
 
 
-def save_user(db: Session, account_in: schemas.AccountIn):
+def create_account(db: Session,account_in:schemas.AccountIn, account_category: models.AccountTyp):
     hashed_password = password_hasher(account_in.password)
     account_db = models.Account(
-        email=account_in.email,
-        is_user=account_in.is_user,
-        is_super_admin=account_in.is_super_admin,
-        password=hashed_password,
-    )
+        email=account_in.email, 
+        account_category = account_category,
+        password=hashed_password)
     db.add(account_db)
     db.commit()
     db.refresh(account_db)

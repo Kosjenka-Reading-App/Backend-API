@@ -54,8 +54,7 @@ class FullExerciseResponse(ExerciseResponse):
 
 class AccountIn(BaseModel):
     email: EmailStr
-    password: str    
-    account_category: str
+    password: str 
 
 
 class AccountOut(BaseModel):
