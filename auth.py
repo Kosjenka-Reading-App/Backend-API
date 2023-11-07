@@ -4,6 +4,7 @@ import models, schemas
 import crud
 import jwt
 import time
+import bcrypt
 
 JWT_VALID_TIME_ACCESS = 60 * 20 #20min
 JWT_VALID_TIME_REFRESH = 60 * 60 * 24 * 7 #One week
@@ -35,13 +36,17 @@ def decodeJWT(token: str):
         return None
 
 def get_user(db: Session, login: schemas.LoginSchema):
-    hashed_password = crud.password_hasher(login.password)
-    return db.query(models.Account).filter(models.Account.email == login.email and models.Account.password == hashed_password).first()
+    user = db.query(models.Account).filter(models.Account.email == login.email).first()
+    if(user == None):
+        return None
+    if(not bcrypt.checkpw(login.password.encode('utf-8'), user.password.encode('utf-8'))):
+        return None
+    return user
 
 def generateToken(account: schemas.AccountOut):
     reponse = schemas.TokenSchema
-    reponse.access_token = createToken(account_id= account.id_account, account_category="1", valid_time=JWT_VALID_TIME_ACCESS, is_access_token=True)
-    reponse.refresh_token = createToken(account_id= account.id_account, account_category="1", valid_time=JWT_VALID_TIME_REFRESH, is_access_token = False)
+    reponse.access_token = createToken(account_id= account.id_account, account_category=account.account_category, valid_time=JWT_VALID_TIME_ACCESS, is_access_token=True)
+    reponse.refresh_token = createToken(account_id= account.id_account, account_category=account.account_category, valid_time=JWT_VALID_TIME_REFRESH, is_access_token = False)
     return reponse
     
 def generate_refresh_token(old_token: str, decoded_token: schemas.AuthSchema):
