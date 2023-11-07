@@ -78,7 +78,6 @@ class UserPatch(BaseModel):
 
 
 class UserCreate(BaseModel):
-    id_account : int
     username : str
     proficiency : float | None = 0.0  
 
