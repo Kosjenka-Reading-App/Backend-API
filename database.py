@@ -1,9 +1,14 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 
 
-SQLALCHEMY_DATABASE_URL = dotenv_values()["DATABASE_URL"]
+load_dotenv()
+
+
+SQLALCHEMY_DATABASE_URL = os.environ["DATABASE_URL"]
 if SQLALCHEMY_DATABASE_URL is None:
     raise ValueError("DATABASE_URL not provided in .env")
 

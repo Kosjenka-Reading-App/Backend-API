@@ -4,6 +4,10 @@ on:
   pull_request:
     branches:
       - dev
+
+env:
+  DATABASE_URL: "sqlite:///./db.sqlite"
+
 jobs:
   tests:
     runs-on: ubuntu-latest
