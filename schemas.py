@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
+import models
 
 import models
 
@@ -53,16 +54,14 @@ class FullExerciseResponse(ExerciseResponse):
 
 class AccountIn(BaseModel):
     email: EmailStr
-    password: str
-    is_user: bool
-    is_super_admin: bool
+    password: str    
+    account_category: str
 
 
 class AccountOut(BaseModel):
     id_account: int
     email: EmailStr
-    is_user: bool
-    is_super_admin: bool
+    account_category: str
 
 
 # Users

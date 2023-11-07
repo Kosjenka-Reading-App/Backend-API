@@ -5,6 +5,10 @@ from sqlalchemy.orm import relationship
 
 from database import Base
 
+class AccountTyp(str, enum.Enum):
+    Regular = 1
+    Admin = 2
+    Superadmin = 3
 
 exercise_category = Table(
     "exercise_category",
@@ -38,8 +42,7 @@ class Account(Base):
     id_account = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String, unique=True)
     password = Column(String)
-    is_user = Column(Boolean)
-    is_super_admin = Column(Boolean)
+    account_category = Column(Enum(AccountTyp))
 
 
 class User(Base):

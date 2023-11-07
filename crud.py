@@ -120,11 +120,9 @@ def get_accounts(db: Session):
 def save_user(db: Session, account_in: schemas.AccountIn):
     hashed_password = password_hasher(account_in.password)
     account_db = models.Account(
-        email=account_in.email,
-        is_user=account_in.is_user,
-        is_super_admin=account_in.is_super_admin,
-        password=hashed_password,
-    )
+        email=account_in.email, 
+        account_category = account_in.account_category,
+        password=hashed_password)
     db.add(account_db)
     db.commit()
     db.refresh(account_db)

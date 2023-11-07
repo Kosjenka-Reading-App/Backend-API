@@ -16,8 +16,7 @@ create table account(
     id_account integer primary key,
     email varchar not null,
     password varchar not null,
-    is_user boolean,
-    is_super_admin boolean not null
+    account_category integer
 );
 
 create table user(
