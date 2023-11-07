@@ -23,11 +23,14 @@ def get_exercises(
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
+    category: models.Category | None = None,
     title_like: str | None = None
 ):
     exercises = db.query(models.Exercise)
     if complexity:
         exercises = exercises.filter(models.Exercise.complexity == complexity)
+    if category:
+        exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
     if order_by:

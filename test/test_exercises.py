@@ -124,3 +124,19 @@ def test_filter_complexity():
     assert {ex["complexity"] for ex in exercises} == {"hard"}
     test_delete_exercise()
 
+
+def test_filter_category():
+    for category in [["cats"], ["dogs"], ["cats", "dogs"]]:
+        new_exercise = {
+            "title": "Title of the exercise",
+            "category": category,
+            "text": "Text of the exercise",
+        }
+        resp = client.post("http://localhost:8000/exercises", json=new_exercise)
+        assert resp.status_code == 200
+    exercises = client.get("http://localhost:8000/exercises?category=cats").json()
+    assert {ex["id"] for ex in exercises} == {1, 3}
+    exercises = client.get("http://localhost:8000/exercises?category=something").json()
+    assert len(exercises) == 0
+    test_delete_exercise()
+

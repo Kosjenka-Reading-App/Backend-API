@@ -48,11 +48,18 @@ def read_exercises(
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
+    category: str | None = None,
     title_like: str | None = None,
     db: Session = Depends(get_db),
 ):
+    if category:
+        db_category = crud.get_category(db, category)
+        if db_category is None:
+            return []
+    else:
+        db_category = None
     exercises = crud.get_exercises(
-        db, skip=skip, limit=limit, order_by=order_by, order=order, complexity=complexity, title_like=title_like
+        db, skip=skip, limit=limit, order_by=order_by, order=order, complexity=complexity, category=db_category, title_like=title_like
     )
     return exercises
 
