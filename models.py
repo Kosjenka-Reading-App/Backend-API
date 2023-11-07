@@ -6,9 +6,9 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 class AccountTyp(str, enum.Enum):
-    Regular = 1
-    Admin = 2
-    Superadmin = 3
+    Regular = "regular"
+    Admin = "admin"
+    Superadmin = "superadmin"
 
 exercise_category = Table(
     "exercise_category",

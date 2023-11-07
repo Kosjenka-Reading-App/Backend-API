@@ -114,7 +114,7 @@ def create_account(account_in: schemas.AccountIn,db: Session = Depends(get_db), 
     return account_saved
 
 @app.post("/register/", response_model=schemas.AccountOut)
-def register_account(account_in: schemas.AccountIn,db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
+def register_account(account_in: schemas.AccountIn,db: Session = Depends(get_db)):
     account_saved= crud.create_account(db,account_in, models.AccountTyp.Regular)
     return account_saved
 
@@ -243,3 +243,10 @@ def refresh(token: schemas.RefreshSchema, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Invalid token or expired token.")
     token = auth.generate_refresh_token(old_token=token.refresh_token, decoded_token=decoded_token)
     return token
+
+
+#CreateSuperadmin just for Debugging
+@app.post("/createsuperadmin/", response_model=schemas.AccountOut)
+def createsuperadmin_only_for_debugging(account_in: schemas.AccountIn,db: Session = Depends(get_db)):
+    account_saved= crud.create_account(db,account_in, models.AccountTyp.Superadmin)
+    return account_saved

@@ -7,13 +7,13 @@ insert into exercise (id,title,text,complexity) values
 
 
 insert into account (id_account,email,password,account_category) values
-    (1,"1@mail.com","test","1"),
-    (2,"2@mail.com","test","2"),
-    (2,"2b@mail.com","test","2"),
-    (3,"3@mail.com","test","3"),
+    (1,"1@mail.com","test","Superadmin"),
+    (2,"2@mail.com","test","Admin"),
+    (3,"3@mail.com","test","Regular"),
+    (4,"4@mail.com","test","Admin");
 
 
 insert into user (id_user,id_account,username,proficiency) values
     (1,1,"UserNameqwerty",null),
     (2,2,"UserNameasdfgh",2.0),
-    (3,3,"UserName123456",3.3)
+    (3,3,"UserName123456",3.3);
