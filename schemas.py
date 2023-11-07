@@ -27,6 +27,7 @@ class ExercisePatch(ExerciseBase):
     text: Optional[str] = None
     complexity: Optional[float] = None
 
+
 class AccountIn(BaseModel) :
     email: EmailStr
     password: str
@@ -38,3 +39,19 @@ class AccountOut(BaseModel) :
     email: EmailStr
     is_user: bool
     is_super_admin: bool
+
+#Users
+class UserSchema(BaseModel):
+    id_user : int
+    id_account :int
+    username : str
+    proficiency : float | None = 0.0  
+
+class UserPatch(BaseModel):
+    username : Optional[str] = None
+    proficiency : Optional[float] = None 
+
+class UserCreate(BaseModel):
+    id_account : int
+    username : str
+    proficiency : float | None = 0.0  
