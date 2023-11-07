@@ -11,14 +11,15 @@ create table exercise(
 );
 
 create table account(
-    id_account primary key,
+    id_account integer primary key,
+    email varchar not null,
     password varchar not null,
     is_user boolean,
     is_super_admin boolean not null
 );
 
 create table user(
-    id_user primary key,
+    id_user integer primary key,
     id_account references account(id_account),
     username varchar,
     proficiency float
