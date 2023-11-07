@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import crud
 import models
 import schemas
+import auth
+from auth_bearer import JWTBearer
 from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -135,8 +137,8 @@ def update_account(
 
 # User
 @app.get("/users/", response_model=list[schemas.UserSchema])
-def read_all_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
+def read_all_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
+    users = crud.get_users(db, account_id = auth_user.account_id, skip=skip, limit=limit)
     return users
 
 
@@ -205,3 +207,12 @@ def update_category(
         db, old_category=old_category, new_category=new_category
     )
     return updated_category
+
+
+@app.post("/login", response_model=schemas.TokenSchema)
+def login(login: schemas.LoginSchema, db: Session = Depends(get_db)):
+    auth_account = auth.get_user(db=db, login=login)
+    if auth_account is None:
+        raise HTTPException(status_code=400, detail="Username/Password wrong")
+    token = auth.generateToken(account=auth_account)
+    return token

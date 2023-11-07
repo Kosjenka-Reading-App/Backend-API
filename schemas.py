@@ -79,6 +79,19 @@ class UserPatch(BaseModel):
 
 
 class UserCreate(BaseModel):
-    id_account: int
-    username: str
-    proficiency: float | None = 0.0
+    id_account : int
+    username : str
+    proficiency : float | None = 0.0  
+
+#Auth
+class LoginSchema(BaseModel):
+    email : EmailStr
+    password : str
+    
+class TokenSchema(BaseModel):
+    access_token : str
+    refresh_token : str
+    
+class AuthSchema(BaseModel):
+    account_id : int
+    account_category : int

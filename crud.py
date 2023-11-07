@@ -129,11 +129,11 @@ def save_user(db: Session, account_in: schemas.AccountIn):
     db.commit()
     db.refresh(account_db)
     return account_db
-
-
-# Users
-def get_users(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.User).offset(skip).limit(limit).all()
+  
+  
+#Users
+def get_users(db: Session, account_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.User).filter(models.User.id_account == account_id).offset(skip).limit(limit).all()
 
 
 def get_user(db: Session, user_id: int):
