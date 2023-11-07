@@ -38,9 +38,10 @@ def health_check():
 
 
 @app.post("/exercises/", response_model=schemas.FullExerciseResponse)
-def create_exercise(exercise: schemas.ExerciseCreate, db: Session = Depends(get_db)):
-    db_exercise = crud.create_exercise(db=db, exercise=exercise)
-    return db_exercise
+def create_exercise(exercise: schemas.ExerciseCreate, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
+    if(models.AccountTyp(auth_user.account_category) != models.AccountTyp.Admin and auth_user.account_category != models.AccountTyp.Superadmin):
+        raise HTTPException(status_code=401, detail="Permission only for Admins and Superadmins")    
+    return crud.create_exercise(db=db, exercise=exercise)
 
 
 @app.get("/exercises/", response_model=list[schemas.ExerciseResponse])
@@ -53,6 +54,7 @@ def read_exercises(
     category: str | None = None,
     title_like: str | None = None,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     if category:
         db_category = crud.get_category(db, category)
@@ -74,7 +76,7 @@ def read_exercises(
 
 
 @app.get("/exercises/{exercise_id}", response_model=schemas.FullExerciseResponse)
-def read_exercise(exercise_id: int, db: Session = Depends(get_db)):
+def read_exercise(exercise_id: int, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
@@ -82,7 +84,9 @@ def read_exercise(exercise_id: int, db: Session = Depends(get_db)):
 
 
 @app.delete("/exercises/{exercise_id}")
-def delete_exercise(exercise_id: int, db: Session = Depends(get_db)):
+def delete_exercise(exercise_id: int, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
+    if(models.AccountTyp(auth_user.account_category) != models.AccountTyp.Admin and auth_user.account_category != models.AccountTyp.Superadmin):
+        raise HTTPException(status_code=401, detail="Permission only for Admins and Superadmins")   
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
@@ -91,9 +95,9 @@ def delete_exercise(exercise_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/exercises/{exercise_id}", response_model=schemas.FullExerciseResponse)
-def update_exercise(
-    exercise_id: int, exercise: schemas.ExercisePatch, db: Session = Depends(get_db)
-):
+def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
+    if(models.AccountTyp(auth_user.account_category) != models.AccountTyp.Admin and auth_user.account_category != models.AccountTyp.Superadmin):
+        raise HTTPException(status_code=401, detail="Permission only for Admins and Superadmins")   
     stored_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if stored_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
