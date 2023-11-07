@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class Category(BaseModel):
@@ -30,6 +30,20 @@ class ExercisePatch(BaseModel):
 
 class FullExerciseResponse(ExerciseResponse):
     text: str
+
+
+class AccountIn(BaseModel):
+    email: EmailStr
+    password: str
+    is_user: bool
+    is_super_admin: bool
+
+
+class AccountOut(BaseModel):
+    id_account: int
+    email: EmailStr
+    is_user: bool
+    is_super_admin: bool
 
 
 # Users

@@ -13,7 +13,8 @@ create table exercise(
 );
 
 create table account(
-    id_account primary key,
+    id_account integer primary key,
+    email varchar not null,
     password varchar not null,
     is_user boolean,
     is_super_admin boolean not null

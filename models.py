@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -22,6 +22,16 @@ class Exercise(Base):
     category = relationship(
         "Category", secondary=exercise_category, back_populates="exercises"
     )
+
+
+class Account(Base):
+    __tablename__ = "account"
+
+    id_account = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    email = Column(String, unique=True)
+    password = Column(String)
+    is_user = Column(Boolean)
+    is_super_admin = Column(Boolean)
 
 
 class User(Base):
