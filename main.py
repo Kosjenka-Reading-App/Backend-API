@@ -67,6 +67,34 @@ def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Sessi
     return updated_exercise
 
 
+@app.post("/accounts/", response_model=schemas.AccountOut)
+def create_account(account_in: schemas.AccountIn,db: Session = Depends(get_db)):
+    account_saved= crud.save_user(db,account_in)
+    return account_saved
+
+@app.get("/accounts/", response_model=list[schemas.AccountOut])
+def get_all_accounts(db: Session = Depends(get_db)):
+    accounts = crud.get_accounts(db)
+    return accounts
+
+@app.delete("/accounts/{account_id}")
+def delete_account(account_id: int, db: Session = Depends(get_db)):
+    db_account = crud.get_account(db, account_id=account_id)
+    if db_account is None:
+        raise HTTPException(status_code=404, detail="account not found")
+    crud.delete_account(db=db, account_id=account_id)
+    return {"message": "account deleted"}
+
+
+@app.patch("/accounts/{account_id}")
+def update_account(account_id: int, account: schemas.AccountIn, db: Session = Depends(get_db)):
+    account = crud.get_account(db, account_id=account_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="account not found")
+    changed_account= crud.update_account(db, account_id=account_id, account =account )
+    return changed_account
+
+
 #User
 @app.get("/users/", response_model=list[schemas.UserSchema])
 def read_all_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
