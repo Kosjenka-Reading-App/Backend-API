@@ -1,3 +1,5 @@
+import enum
+
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,10 +17,8 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
-
-exercise_order_by = {"", "complexity"}
 
 
 # Dependency
@@ -45,16 +45,28 @@ def create_exercise(exercise: schemas.ExerciseCreate, db: Session = Depends(get_
 def read_exercises(
     skip: int = 0,
     limit: int = 100,
-    order_by: str = "",
-    title_like: str = "",
+    order_by: schemas.ExerciseOrderBy | None = None,
+    order: schemas.Order | None = None,
+    complexity: models.Complexity | None = None,
+    category: str | None = None,
+    title_like: str | None = None,
     db: Session = Depends(get_db),
 ):
-    if order_by not in exercise_order_by:
-        raise HTTPException(
-            status_code=404, detail=f"order_by must be one of {exercise_order_by}"
-        )
+    if category:
+        db_category = crud.get_category(db, category)
+        if db_category is None:
+            return []
+    else:
+        db_category = None
     exercises = crud.get_exercises(
-        db, skip=skip, limit=limit, order_by=order_by, title_like=title_like
+        db,
+        skip=skip,
+        limit=limit,
+        order_by=order_by,
+        order=order,
+        complexity=complexity,
+        category=db_category,
+        title_like=title_like,
     )
     return exercises
 

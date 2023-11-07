@@ -1,6 +1,25 @@
+from enum import Enum
 from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
+
+import models
+
+
+class ExerciseOrderBy(Enum):
+    category = "category"
+    complexity = "complexity"
+    title = "title"
+
+
+class ExerciseFilterBy(Enum):
+    category = "category"
+    complexity = "complexity"
+
+
+class Order(Enum):
+    asc = "asc"
+    desc = "desc"
 
 
 class Category(BaseModel):
@@ -10,21 +29,21 @@ class Category(BaseModel):
 class ExerciseResponse(BaseModel):
     id: int
     title: str
-    complexity: float
+    complexity: models.Complexity | None
     category: List[Category]
 
 
 class ExerciseCreate(BaseModel):
     title: str
     text: str
-    complexity: float | None = 0.0
+    complexity: models.Complexity | None = None
     category: Optional[List[str]] = []
 
 
 class ExercisePatch(BaseModel):
     title: Optional[str] = None
     text: Optional[str] = None
-    complexity: Optional[float] = None
+    complexity: Optional[models.Complexity] = None
     category: Optional[List[str]] = []
 
 

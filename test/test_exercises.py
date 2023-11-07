@@ -6,7 +6,7 @@ def test_create_exercise():
     exercise_count = len(exercises)
     new_exercise = {
         "title": "Title of the exercise",
-        "complexity": 3.0,
+        "complexity": "medium",
         "text": "Text of the exercise",
     }
     created_exercise = client.post(
@@ -30,7 +30,7 @@ def test_create_exercise_without_complexity():
     ).json()
     for key in new_exercise:
         assert created_exercise[key] == new_exercise[key]
-    assert created_exercise["complexity"] == 0.0
+    assert created_exercise["complexity"] == None
     exercises = client.get("http://localhost:8000/exercises").json()
     assert len(exercises) == exercise_count + 1
 
@@ -67,10 +67,15 @@ def test_update_exercise():
 
 def test_sort_exercises():
     exercises = client.get("http://localhost:8000/exercises?order_by=id")
-    assert exercises.status_code == 404
-    exercises = client.get("http://localhost:8000/exercises?order_by=complexity").json()
-    complexities = [exercise["complexity"] for exercise in exercises]
-    assert complexities == sorted(complexities)
+    assert exercises.status_code == 422
+    exercises = client.get("http://localhost:8000/exercises?order_by=title").json()
+    titles = [exercise["title"] for exercise in exercises]
+    assert titles == sorted(titles)
+    exercises = client.get(
+        "http://localhost:8000/exercises?order_by=title&order=desc"
+    ).json()
+    titles = [exercise["title"] for exercise in exercises]
+    assert titles == sorted(titles)[::-1]
 
 
 def test_search_exercises():
@@ -91,3 +96,66 @@ def test_delete_exercise():
         }
         assert len(remaining_exercise_ids) == len(exercise_ids)
         assert exercise_id not in remaining_exercise_ids
+
+
+def test_sort_complexity():
+    for complexity in ["hard", "easy", "medium", "hard", "easy", "medium"]:
+        new_exercise = {
+            "title": "Title of the exercise",
+            "complexity": complexity,
+            "text": "Text of the exercise",
+        }
+        resp = client.post("http://localhost:8000/exercises", json=new_exercise)
+        assert resp.status_code == 200
+    exercises = client.get(
+        "http://localhost:8000/exercises?order_by=complexity&order=asc"
+    ).json()
+    assert [ex["complexity"] for ex in exercises] == [
+        "easy",
+        "easy",
+        "medium",
+        "medium",
+        "hard",
+        "hard",
+    ]
+    exercises = client.get(
+        "http://localhost:8000/exercises?order_by=complexity&order=desc"
+    ).json()
+    assert [ex["complexity"] for ex in exercises] == [
+        "hard",
+        "hard",
+        "medium",
+        "medium",
+        "easy",
+        "easy",
+    ]
+
+
+def test_filter_complexity():
+    for complexity in ["hard", "easy", "medium", "hard", "easy", "medium"]:
+        new_exercise = {
+            "title": "Title of the exercise",
+            "complexity": complexity,
+            "text": "Text of the exercise",
+        }
+        resp = client.post("http://localhost:8000/exercises", json=new_exercise)
+        assert resp.status_code == 200
+    exercises = client.get("http://localhost:8000/exercises?complexity=hard").json()
+    assert {ex["complexity"] for ex in exercises} == {"hard"}
+    test_delete_exercise()
+
+
+def test_filter_category():
+    for category in [["cats"], ["dogs"], ["cats", "dogs"]]:
+        new_exercise = {
+            "title": "Title of the exercise",
+            "category": category,
+            "text": "Text of the exercise",
+        }
+        resp = client.post("http://localhost:8000/exercises", json=new_exercise)
+        assert resp.status_code == 200
+    exercises = client.get("http://localhost:8000/exercises?category=cats").json()
+    assert {ex["id"] for ex in exercises} == {1, 3}
+    exercises = client.get("http://localhost:8000/exercises?category=something").json()
+    assert len(exercises) == 0
+    test_delete_exercise()

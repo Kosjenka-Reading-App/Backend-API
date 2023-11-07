@@ -1,7 +1,15 @@
+from sqlalchemy import case
 from sqlalchemy.orm import Session
 
 import models, schemas
 import bcrypt
+
+
+order_by_column = {
+    schemas.ExerciseOrderBy.category: models.Exercise.category,
+    schemas.ExerciseOrderBy.complexity: models.Exercise.complexity,
+    schemas.ExerciseOrderBy.title: models.Exercise.title,
+}
 
 
 def get_exercise(db: Session, exercise_id: int):
@@ -12,16 +20,25 @@ def get_exercises(
     db: Session,
     skip: int = 0,
     limit: int = 100,
-    order_by: str = "",
-    title_like: str = "",
+    order_by: schemas.ExerciseOrderBy | None = None,
+    order: schemas.Order | None = None,
+    complexity: models.Complexity | None = None,
+    category: models.Category | None = None,
+    title_like: str | None = None,
 ):
     exercises = db.query(models.Exercise)
+    if complexity:
+        exercises = exercises.filter(models.Exercise.complexity == complexity)
+    if category:
+        exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
     if order_by:
-        match order_by:
-            case "complexity":
-                exercises = exercises.order_by(models.Exercise.complexity)
+        exercises = exercises.order_by(
+            order_by_column[order_by].desc()
+            if order == schemas.Order.desc
+            else order_by_column[order_by]
+        )
     return exercises.offset(skip).limit(limit).all()
 
 
