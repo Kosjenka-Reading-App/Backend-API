@@ -1,5 +1,3 @@
-delete from exercise;
-delete from account;
 insert into exercise (id,title,text,complexity) values
     (1,"Tom the cat","Tom the cat was a nice fellow. Shame that he passed his entrance exams poorly",2.0),
     (2,"Matt the cat","Matt the cat was a nice fellow. Shame that he passed his entrance exams well",2.5),

@@ -66,11 +66,12 @@ def delete_account(db: Session, account_id: int):
 
 def update_account(db: Session, account_id: int, account: schemas.AccountOut):
     stored_account = db.query(models.Account).filter(models.Account.id_account == account_id).first()
-    if stored_account is None:
-        return None
     update_data = account.model_dump(exclude_unset=True)
     for key in update_data:
         setattr(stored_account, key, update_data[key])
     db.commit()
     db.refresh(stored_account)
     return stored_account
+
+def get_accounts(db: Session):
+    return db.query(models.Account).all()

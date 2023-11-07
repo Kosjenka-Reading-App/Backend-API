@@ -60,9 +60,7 @@ def create_account(account_in: schemas.AccountIn,db: Session = Depends(get_db)):
 
 @app.get("/accounts/", response_model=list[schemas.AccountOut])
 def get_all_accounts(db: Session = Depends(get_db)):
-    accounts = db.query(models.Account).all()
-    if not accounts:
-        return []
+    accounts = crud.get_accounts(db)
     return accounts
 
 @app.delete("/accounts/{account_id}")
@@ -76,7 +74,8 @@ def delete_account(account_id: int, db: Session = Depends(get_db)):
 
 @app.patch("/accounts/{account_id}")
 def update_account(account_id: int, account: schemas.AccountIn, db: Session = Depends(get_db)):
-    updated_account = crud.update_account(db, account_id=account_id, account=account)
-    if updated_account is None:
+    account = crud.get_account(db, account_id=account_id)
+    if account is None:
         raise HTTPException(status_code=404, detail="account not found")
-    return updated_account
+    changed_account= crud.update_account(db, account_id=account_id, account =account )
+    return changed_account
