@@ -65,7 +65,7 @@ def test_create_exercise_with_category():
             assert created_exercise[key] == [{"category": "cats"}, {"category": "dogs"}]
             continue
         assert created_exercise[key] == new_exercise[key]
-    assert created_exercise["complexity"] == 0.0
+    assert created_exercise["complexity"] == None
     exercises = client.get("http://localhost:8000/exercises").json()
     assert len(exercises) == exercise_count + 1
     categories = client.get("http://localhost:8000/categories/").json()
@@ -107,3 +107,4 @@ def test_rename_category():
     assert updated_category["category"] == "one mouse"
     categories = client.get("http://localhost:8000/categories").json()
     assert set(categories) == {"cats", "dogs", "one mouse"}
+

@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey, Boolean
+import enum
+
+from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey, Boolean, Enum
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -12,12 +14,18 @@ exercise_category = Table(
 )
 
 
+class Complexity(enum.Enum):
+    _easy = 'easy'
+    _medium = 'medium'
+    hard = 'hard'
+
+
 class Exercise(Base):
     __tablename__ = "exercise"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String)
-    complexity = Column(Float)
+    complexity = Column(Enum(Complexity), nullable=True)
     text = Column(String)
     category = relationship(
         "Category", secondary=exercise_category, back_populates="exercises"
