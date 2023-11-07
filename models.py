@@ -5,10 +5,10 @@ from database import Base
 
 
 exercise_category = Table(
-    'exercise_category',
+    "exercise_category",
     Base.metadata,
-    Column('category_name', String, ForeignKey('category.category')),
-    Column('exercise_id', Integer, ForeignKey('exercise.id'))
+    Column("category_name", String, ForeignKey("category.category")),
+    Column("exercise_id", Integer, ForeignKey("exercise.id")),
 )
 
 
@@ -19,7 +19,9 @@ class Exercise(Base):
     title = Column(String)
     complexity = Column(Float)
     text = Column(String)
-    category = relationship('Category', secondary=exercise_category, back_populates='exercises')
+    category = relationship(
+        "Category", secondary=exercise_category, back_populates="exercises"
+    )
 
 
 class User(Base):
@@ -27,13 +29,12 @@ class User(Base):
 
     id_user = Column(Integer, primary_key=True, index=True, autoincrement=True)
     id_account = Column(Integer)
-    username = Column(String)   
-    proficiency = Column(Float)    
+    username = Column(String)
+    proficiency = Column(Float)
 
 
 class Category(Base):
-    __tablename__ = 'category'
+    __tablename__ = "category"
 
     category = Column(String, primary_key=True)
-    exercises = relationship('Exercise', secondary=exercise_category)
-
+    exercises = relationship("Exercise", secondary=exercise_category)
