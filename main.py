@@ -135,7 +135,7 @@ def update_account(
     return changed_account
 
 
-# User
+#User
 @app.get("/users/", response_model=list[schemas.UserSchema])
 def read_all_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
     users = crud.get_users(db, account_id = auth_user.account_id, skip=skip, limit=limit)
@@ -209,10 +209,21 @@ def update_category(
     return updated_category
 
 
+#auth
 @app.post("/login", response_model=schemas.TokenSchema)
 def login(login: schemas.LoginSchema, db: Session = Depends(get_db)):
     auth_account = auth.get_user(db=db, login=login)
     if auth_account is None:
         raise HTTPException(status_code=400, detail="Username/Password wrong")
     token = auth.generateToken(account=auth_account)
+    return token
+
+@app.post("/refresh", response_model=schemas.TokenSchema)
+def refresh(token: schemas.RefreshSchema, db: Session = Depends(get_db)):
+    decoded_token = auth.decodeJWT(token=token.refresh_token)
+    if decoded_token is None:
+        raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+    if decoded_token.is_access_token != False:
+        raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+    token = auth.generate_refresh_token(old_token=token.refresh_token, decoded_token=decoded_token)
     return token

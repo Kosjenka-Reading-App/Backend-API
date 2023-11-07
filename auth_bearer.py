@@ -13,7 +13,9 @@ class JWTBearer(HTTPBearer):
                 raise HTTPException(status_code=403, detail="Invalid authentication scheme.")
             token = auth.decodeJWT(credentials.credentials)
             if token == None:
-                raise HTTPException(status_code=403, detail="Invalid token or expired token.")#
+                raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+            if token.is_access_token != True:
+                raise HTTPException(status_code=403, detail="Invalid token or expired token.")
             return token
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
