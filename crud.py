@@ -48,8 +48,6 @@ def get_user(db: Session, user_id: int):
 
 def update_user(db: Session, user_id: int, user: schemas.UserPatch):
     user_id = db.query(models.User).filter(models.User.id_user == user_id).first()
-    if user_id is None:
-        return None
     update_data = user.model_dump(exclude_unset=True)
     for key in update_data:
         setattr(user_id, key, update_data[key])
