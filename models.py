@@ -19,6 +19,7 @@ class Exercise(Base):
     title = Column(String)
     complexity = Column(Float)
     text = Column(String)
+    category = relationship('Category', secondary=exercise_category, back_populates='exercises')
 
 
 class User(Base):
@@ -28,7 +29,6 @@ class User(Base):
     id_account = Column(Integer)
     username = Column(String)   
     proficiency = Column(Float)    
-    category = relationship('Category', secondary=exercise_category, back_populates='exercises')
 
 
 class Category(Base):
