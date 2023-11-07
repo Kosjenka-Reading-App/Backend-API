@@ -131,3 +131,4 @@ def update_category(old_category: str, new_category: schemas.Category, db: Sessi
         raise HTTPException(status_code=404, detail="category not found")
     updated_category = crud.update_category(db, old_category=old_category, new_category=new_category)
     return updated_category
+

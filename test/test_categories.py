@@ -27,7 +27,6 @@ def test_update_category():
     original_category = categories[0]
     body = {'category': 'Mice'}
     updated_category = client.patch(f'http://localhost:8000/categories/{original_category}', json=body).json()
-    print(updated_category)
     assert updated_category['category'] == 'Mice'
     assert original_category not in client.get('http://localhost:8000/categories').json()
 
@@ -41,4 +40,56 @@ def test_delete_category():
         remaining_categories = client.get('http://localhost:8000/categories').json()
         assert len(remaining_categories) == len(categories)
         assert category not in remaining_categories
+
+
+def test_create_exercise_with_category():
+    client.post('http://localhost:8000/categories/cats')
+    categories = client.get('http://localhost:8000/categories/').json()
+    assert 'cats' in categories
+    assert 'dogs' not in categories
+    exercises = client.get('http://localhost:8000/exercises').json()
+    exercise_count = len(exercises)
+    new_exercise = {
+        'title': 'Title of exercise about cats',
+        'text': 'Text of exercise about cats',
+        'category': [{'category': 'cats'}, {'category': 'dogs'}],
+    }
+    created_exercise = client.post('http://localhost:8000/exercises', json=new_exercise).json()
+    for key in new_exercise:
+        assert created_exercise[key] == new_exercise[key]
+    assert created_exercise['complexity'] == 0.0
+    exercises = client.get('http://localhost:8000/exercises').json()
+    assert len(exercises) == exercise_count + 1
+    categories = client.get('http://localhost:8000/categories/').json()
+    assert set(categories) == {'cats', 'dogs'}
+
+
+def test_update_exercise_with_category():
+    categories = client.get('http://localhost:8000/categories').json()
+    assert set(categories) == {'cats', 'dogs'}
+    exercises = client.get('http://localhost:8000/exercises').json()
+    exercise_id = exercises[0]['id']
+    original_exercise = client.get(f'http://localhost:8000/exercises/{exercise_id}').json()
+    body = {'category': [{'category': 'cats'}, {'category': 'mice'}]}
+    client.patch(f'http://localhost:8000/exercises/{exercise_id}', json=body).json()
+    updated_exercise = client.get(f'http://localhost:8000/exercises/{exercise_id}').json()
+    for key in updated_exercise:
+        if key == 'category':
+            assert {cat['category'] for cat in updated_exercise[key]} == {'cats', 'mice'}
+            continue
+        assert updated_exercise[key] == original_exercise[key]
+    categories = client.get('http://localhost:8000/categories').json()
+    assert set(categories) == {'cats', 'dogs', 'mice'}
+
+
+def test_rename_category():
+    categories = client.get('http://localhost:8000/categories').json()
+    assert set(categories) == {'cats', 'dogs', 'mice'}
+    body = {
+        "category": "one mouse"
+    }
+    updated_category = client.patch('http://localhost:8000/categories/mice?', json=body).json()
+    assert updated_category['category'] == "one mouse"
+    categories = client.get('http://localhost:8000/categories').json()
+    assert set(categories) == {'cats', 'dogs', 'one mouse'}
 

@@ -10,13 +10,13 @@ class Category(BaseModel):
 class ExerciseBase(BaseModel):
     title: str
     complexity: float | None = 0.0
-    category: List[str] = []
+    category: Optional[List[Category]] = []
 
 
 class Exercise(ExerciseBase):
     id: int
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
@@ -32,6 +32,7 @@ class ExercisePatch(ExerciseBase):
     title: Optional[str] = None
     text: Optional[str] = None
     complexity: Optional[float] = None
+    category: Optional[List[Category]] = []
 
 #Users
 class UserSchema(BaseModel):

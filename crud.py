@@ -25,6 +25,12 @@ def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
         complexity=exercise.complexity,
     )
     db.add(db_exercise)
+    if exercise.category:
+        for category in exercise.category:
+            db_category = get_category(db, category.category)
+            if db_category is None:
+                db_category = create_category(db, category.category)
+            db_exercise.category.append(db_category)
     db.commit()
     db.refresh(db_exercise)
     return db_exercise
@@ -38,6 +44,9 @@ def delete_exercise(db: Session, exercise_id: int):
 def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePatch):
     stored_exercise = db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
     update_data = exercise.model_dump(exclude_unset=True)
+    if exercise.category:
+        _update_exercise_categories(db, stored_exercise, exercise.category)
+        update_data.pop('category')
     for key in update_data:
         setattr(stored_exercise, key, update_data[key])
     db.commit()
@@ -74,6 +83,16 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+
+def _update_exercise_categories(db: Session, exercise: models.Exercise, categories: list[schemas.Category]):
+    new_categories = []
+    for category in categories:
+        db_category = get_category(db, category.category)
+        if db_category is None:
+            db_category = create_category(db, category.category)
+        new_categories.append(db_category)
+    exercise.category = new_categories
 
 
 def get_categories(db: Session):

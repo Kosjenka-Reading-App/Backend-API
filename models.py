@@ -7,8 +7,8 @@ from database import Base
 exercise_category = Table(
     'exercise_category',
     Base.metadata,
-    Column('category', ForeignKey('category.category')),
-    Column('exercise_id', ForeignKey('exercise.id'))
+    Column('category_name', String, ForeignKey('category.category')),
+    Column('exercise_id', Integer, ForeignKey('exercise.id'))
 )
 
 
@@ -35,4 +35,5 @@ class Category(Base):
     __tablename__ = 'category'
 
     category = Column(String, primary_key=True)
-    exercises = relationship('Exercise', secondary=exercise_category, back_populates='category')
+    exercises = relationship('Exercise', secondary=exercise_category)
+
