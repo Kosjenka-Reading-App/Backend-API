@@ -24,7 +24,7 @@ def get_exercises(
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
     category: models.Category | None = None,
-    title_like: str | None = None
+    title_like: str | None = None,
 ):
     exercises = db.query(models.Exercise)
     if complexity:
@@ -34,7 +34,11 @@ def get_exercises(
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
     if order_by:
-        exercises = exercises.order_by(order_by_column[order_by].desc() if order == schemas.Order.desc else order_by_column[order_by])
+        exercises = exercises.order_by(
+            order_by_column[order_by].desc()
+            if order == schemas.Order.desc
+            else order_by_column[order_by]
+        )
     return exercises.offset(skip).limit(limit).all()
 
 

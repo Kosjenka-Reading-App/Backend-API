@@ -15,9 +15,9 @@ exercise_category = Table(
 
 
 class Complexity(enum.Enum):
-    _easy = 'easy'
-    _medium = 'medium'
-    hard = 'hard'
+    _easy = "easy"
+    _medium = "medium"
+    hard = "hard"
 
 
 class Exercise(Base):

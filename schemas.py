@@ -7,19 +7,19 @@ import models
 
 
 class ExerciseOrderBy(Enum):
-    category = 'category'
-    complexity = 'complexity'
-    title = 'title'
+    category = "category"
+    complexity = "complexity"
+    title = "title"
 
 
 class ExerciseFilterBy(Enum):
-    category = 'category'
-    complexity = 'complexity'
+    category = "category"
+    complexity = "complexity"
 
 
 class Order(Enum):
-    asc = 'asc'
-    desc = 'desc'
+    asc = "asc"
+    desc = "desc"
 
 
 class Category(BaseModel):
@@ -82,4 +82,3 @@ class UserCreate(BaseModel):
     id_account: int
     username: str
     proficiency: float | None = 0.0
-

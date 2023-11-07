@@ -107,4 +107,3 @@ def test_rename_category():
     assert updated_category["category"] == "one mouse"
     categories = client.get("http://localhost:8000/categories").json()
     assert set(categories) == {"cats", "dogs", "one mouse"}
-

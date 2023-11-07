@@ -17,7 +17,7 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 
@@ -59,7 +59,14 @@ def read_exercises(
     else:
         db_category = None
     exercises = crud.get_exercises(
-        db, skip=skip, limit=limit, order_by=order_by, order=order, complexity=complexity, category=db_category, title_like=title_like
+        db,
+        skip=skip,
+        limit=limit,
+        order_by=order_by,
+        order=order,
+        complexity=complexity,
+        category=db_category,
+        title_like=title_like,
     )
     return exercises
 
