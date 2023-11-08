@@ -3,7 +3,7 @@ name: Build and Publish Development Docker Images
 on:
   push:
     branches:
-      - fix/database-url
+      - dev
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -46,4 +46,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --local-only --image ghcr.io/dostini/api:fix-database-url
+      - run: flyctl deploy --local-only --image ghcr.io/dostini/api:dev
