@@ -9,7 +9,7 @@ load_dotenv()
 
 
 SQLALCHEMY_DATABASE_URL = os.environ["DATABASE_URL"]
-print(SQLALCHEMY_DATABASE_URL)
+
 if SQLALCHEMY_DATABASE_URL is None:
     raise ValueError("DATABASE_URL not provided in .env")
 
