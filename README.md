@@ -1,16 +1,11 @@
 # Development environment setup
 
-Create the database and fill it with test data.
-```bash
-cat setup.sql | sqlite3 db.sqlite
-cat fill_test_data.sql | sqlite3 db.sqlite
-```
-
 Activate the virtual environment and install the required packages.
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
 ```
 
 Run the API server.
