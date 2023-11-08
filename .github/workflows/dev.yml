@@ -3,11 +3,12 @@ name: Build and Publish Development Docker Images
 on:
   push:
     branches:
-      - dev
+      - fix/database-url
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
 
 jobs:
   deploy:
@@ -33,6 +34,10 @@ jobs:
         with:
           images: ghcr.io/dostini/api
 
+      - name: Crate env file with secrets
+        run: |
+          echo "DATABASE_URL=${{ secrets.DEV_DATABASE_URL }}" >> .env
+
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
@@ -41,7 +46,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # TODO: postgres build-args: BACKEND_URL=${{ secrets.BACKEND_URL_DEV }}
-
+          build-args: DATABASE_URL=${{ secrets.DEV_DATABASE_URL }}
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --local-only --image ghcr.io/dostini/api:dev
+      - run: flyctl deploy --local-only --image ghcr.io/dostini/api:fix-database-url
