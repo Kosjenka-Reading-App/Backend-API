@@ -54,7 +54,7 @@ class FullExerciseResponse(ExerciseResponse):
 
 class AccountIn(BaseModel):
     email: EmailStr
-    password: str 
+    password: str
 
 
 class AccountOut(BaseModel):
@@ -77,22 +77,26 @@ class UserPatch(BaseModel):
 
 
 class UserCreate(BaseModel):
-    username : str
-    proficiency : float | None = 0.0  
+    username: str
+    proficiency: float | None = 0.0
 
-#Auth
+
+# Auth
 class LoginSchema(BaseModel):
-    email : EmailStr
-    password : str
-    
+    email: EmailStr
+    password: str
+
+
 class TokenSchema(BaseModel):
-    access_token : str
-    refresh_token : str
-    
+    access_token: str
+    refresh_token: str
+
+
 class AuthSchema(BaseModel):
-    account_id : int
-    account_category : int    
-    is_access_token : bool
-    
+    account_id: int
+    account_category: int
+    is_access_token: bool
+
+
 class RefreshSchema(BaseModel):
-    refresh_token : str
+    refresh_token: str

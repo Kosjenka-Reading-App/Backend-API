@@ -81,19 +81,32 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     db.refresh(stored_exercise)
     return stored_exercise
 
-#Accounts
-def password_hasher(raw_password:str):
+
+# Accounts
+def password_hasher(raw_password: str):
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(raw_password.encode("utf-8"), salt)
     return hashed_password.decode("utf-8")
 
 
 def get_account(db: Session, auth_user: schemas.AuthSchema, account_id: int):
-    if(models.AccountType(auth_user.account_category) == models.AccountType.Superadmin):
-        return db.query(models.Account).filter(models.Account.id_account == account_id, models.Account.account_category == models.AccountType.Admin).first()
-    if(auth_user.account_id == account_id):
-        return db.query(models.Account).filter(models.Account.id_account == account_id).first()
+    if models.AccountType(auth_user.account_category) == models.AccountType.Superadmin:
+        return (
+            db.query(models.Account)
+            .filter(
+                models.Account.id_account == account_id,
+                models.Account.account_category == models.AccountType.Admin,
+            )
+            .first()
+        )
+    if auth_user.account_id == account_id:
+        return (
+            db.query(models.Account)
+            .filter(models.Account.id_account == account_id)
+            .first()
+        )
     return None
+
 
 def delete_account(db: Session, account_id: int):
     db.delete(
@@ -115,24 +128,37 @@ def update_account(db: Session, account_id: int, account: schemas.AccountOut):
 
 
 def get_accounts(db: Session):
-    return db.query(models.Account).filter(models.Account.account_category == models.AccountType.Admin).all()
+    return (
+        db.query(models.Account)
+        .filter(models.Account.account_category == models.AccountType.Admin)
+        .all()
+    )
 
 
-def create_account(db: Session,account_in:schemas.AccountIn, account_category: models.AccountType):
+def create_account(
+    db: Session, account_in: schemas.AccountIn, account_category: models.AccountType
+):
     hashed_password = password_hasher(account_in.password)
     account_db = models.Account(
-        email=account_in.email, 
-        account_category = account_category,
-        password=hashed_password)
+        email=account_in.email,
+        account_category=account_category,
+        password=hashed_password,
+    )
     db.add(account_db)
     db.commit()
     db.refresh(account_db)
     return account_db
-  
-  
-#Users
+
+
+# Users
 def get_users(db: Session, account_id: int, skip: int = 0, limit: int = 100):
-    return db.query(models.User).filter(models.User.id_account == account_id).offset(skip).limit(limit).all()
+    return (
+        db.query(models.User)
+        .filter(models.User.id_account == account_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_user(db: Session, user_id: int):

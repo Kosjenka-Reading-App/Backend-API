@@ -5,10 +5,12 @@ from sqlalchemy.orm import relationship
 
 from database import Base
 
+
 class AccountType(str, enum.Enum):
     Regular = "regular"
     Admin = "admin"
     Superadmin = "superadmin"
+
 
 exercise_category = Table(
     "exercise_category",
