@@ -39,7 +39,7 @@ def health_check():
 
 @app.post("/exercises/", response_model=schemas.FullExerciseResponse)
 def create_exercise(exercise: schemas.ExerciseCreate, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
-    if(models.AccountTyp(auth_user.account_category) != models.AccountTyp.Admin and models.AccountTyp(auth_user.account_category) != models.AccountTyp.Superadmin):
+    if(models.AccountType(auth_user.account_category) != models.AccountType.Admin and models.AccountType(auth_user.account_category) != models.AccountType.Superadmin):
         raise HTTPException(status_code=401, detail="Permission only for Admins and Superadmins")    
     return crud.create_exercise(db=db, exercise=exercise)
 
@@ -85,7 +85,7 @@ def read_exercise(exercise_id: int, db: Session = Depends(get_db), auth_user: sc
 
 @app.delete("/exercises/{exercise_id}")
 def delete_exercise(exercise_id: int, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
-    if(models.AccountTyp(auth_user.account_category) != models.AccountTyp.Admin and amodels.AccountTyp(auth_user.account_category) != models.AccountTyp.Superadmin):
+    if(models.AccountType(auth_user.account_category) != models.AccountType.Admin and amodels.AccountType(auth_user.account_category) != models.AccountType.Superadmin):
         raise HTTPException(status_code=401, detail="Permission only for Admins and Superadmins")   
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
@@ -96,7 +96,7 @@ def delete_exercise(exercise_id: int, db: Session = Depends(get_db), auth_user: 
 
 @app.patch("/exercises/{exercise_id}", response_model=schemas.FullExerciseResponse)
 def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
-    if(models.AccountTyp(auth_user.account_category) != models.AccountTyp.Admin and models.AccountTyp(auth_user.account_category) != models.AccountTyp.Superadmin):
+    if(models.AccountType(auth_user.account_category) != models.AccountType.Admin and models.AccountType(auth_user.account_category) != models.AccountType.Superadmin):
         raise HTTPException(status_code=401, detail="Permission only for Admins and Superadmins")   
     stored_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if stored_exercise is None:
@@ -108,20 +108,20 @@ def update_exercise(exercise_id: int, exercise: schemas.ExercisePatch, db: Sessi
 
 @app.post("/accounts/", response_model=schemas.AccountOut)
 def create_account(account_in: schemas.AccountIn,db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
-    if(models.AccountTyp(auth_user.account_category) != models.AccountTyp.Superadmin):
+    if(models.AccountType(auth_user.account_category) != models.AccountType.Superadmin):
         raise HTTPException(status_code=401, detail="Permission only for Superadmins")   
-    account_saved= crud.create_account(db,account_in, models.AccountTyp.Admin)
+    account_saved= crud.create_account(db,account_in, models.AccountType.Admin)
     return account_saved
 
 @app.post("/register/", response_model=schemas.AccountOut)
 def register_account(account_in: schemas.AccountIn,db: Session = Depends(get_db)):
-    account_saved= crud.create_account(db,account_in, models.AccountTyp.Regular)
+    account_saved= crud.create_account(db,account_in, models.AccountType.Regular)
     return account_saved
 
 
 @app.get("/accounts/", response_model=list[schemas.AccountOut])
 def get_all_accounts(db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
-    if(models.AccountTyp(auth_user.account_category) != models.AccountTyp.Superadmin):
+    if(models.AccountType(auth_user.account_category) != models.AccountType.Superadmin):
         raise HTTPException(status_code=401, detail="Permission only for Superadmins")  
     accounts = crud.get_accounts(db)
     return accounts
@@ -248,5 +248,5 @@ def refresh(token: schemas.RefreshSchema, db: Session = Depends(get_db)):
 #CreateSuperadmin just for Debugging
 @app.post("/createsuperadmin/", response_model=schemas.AccountOut)
 def createsuperadmin_only_for_debugging(account_in: schemas.AccountIn,db: Session = Depends(get_db)):
-    account_saved= crud.create_account(db,account_in, models.AccountTyp.Superadmin)
+    account_saved= crud.create_account(db,account_in, models.AccountType.Superadmin)
     return account_saved
