@@ -1,14 +1,8 @@
 #
 FROM python:3.11-bullseye
 
-RUN apt update && apt upgrade
-RUN apt install sqlite3
-
-
 #
 WORKDIR /app
-
-RUN cat setup.sql | sqlite3 db.sqlite
 
 #
 COPY ./requirements.txt /app/requirements.txt
