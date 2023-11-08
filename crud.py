@@ -1,4 +1,3 @@
-from sqlalchemy import case
 from sqlalchemy.orm import Session
 
 import models, schemas
@@ -180,9 +179,9 @@ def delete_user(db: Session, user_id: int):
     db.commit()
 
 
-def create_user(db: Session, user: schemas.UserCreate):
+def create_user(db: Session, account_id: int, user: schemas.UserCreate):
     db_user = models.User(
-        id_account=user.id_account,
+        id_account=account_id,
         username=user.username,
         proficiency=user.proficiency,
     )

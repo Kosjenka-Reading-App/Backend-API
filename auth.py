@@ -1,7 +1,8 @@
+from typing import Type
+
 from sqlalchemy.orm import Session
 
 import models, schemas
-import crud
 import jwt
 import time
 import bcrypt
@@ -13,7 +14,7 @@ JWT_ALGORITHM = "HS256"
 
 
 def createToken(
-    account_id: int, account_category: int, valid_time: int, is_access_token: bool
+    account_id: int, account_category: str, valid_time: int, is_access_token: bool
 ):
     payload = {
         "account_id": account_id,
@@ -25,7 +26,7 @@ def createToken(
     return token
 
 
-def decodeJWT(token: str):
+def decodeJWT(token: str) -> Type[schemas.AuthSchema] | None:
     try:
         decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         if decoded_token["expires"] < time.time():
@@ -67,7 +68,7 @@ def generateToken(account: schemas.AccountOut):
     return reponse
 
 
-def generate_refresh_token(old_token: str, decoded_token: schemas.AuthSchema):
+def generate_refresh_token(old_token: str, decoded_token: Type[schemas.AuthSchema]):
     reponse = schemas.TokenSchema
     reponse.access_token = createToken(
         account_id=decoded_token.account_id,

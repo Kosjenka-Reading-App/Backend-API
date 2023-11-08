@@ -1,4 +1,3 @@
-import time
 from conftest import client
 
 import pytest
@@ -14,7 +13,7 @@ def test_create_account():
         "is_user": True,
         "is_super_admin": False,
     }
-    created_account = client.post(
+    _ = client.post(
         "http://localhost:8000/accounts", json=new_account
     ).json()
     accounts = client.get("http://localhost:8000/accounts").json()

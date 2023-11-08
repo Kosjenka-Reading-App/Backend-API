@@ -94,7 +94,7 @@ class TokenSchema(BaseModel):
 
 class AuthSchema(BaseModel):
     account_id: int
-    account_category: int
+    account_category: str
     is_access_token: bool
 
 

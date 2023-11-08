@@ -1,5 +1,3 @@
-import enum
-
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -64,7 +62,6 @@ def read_exercises(
     category: str | None = None,
     title_like: str | None = None,
     db: Session = Depends(get_db),
-    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     if category:
         db_category = crud.get_category(db, category)
@@ -89,7 +86,6 @@ def read_exercises(
 def read_exercise(
     exercise_id: int,
     db: Session = Depends(get_db),
-    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
@@ -105,7 +101,7 @@ def delete_exercise(
 ):
     if (
         models.AccountType(auth_user.account_category) != models.AccountType.Admin
-        and amodels.AccountType(auth_user.account_category)
+        and models.AccountType(auth_user.account_category)
         != models.AccountType.Superadmin
     ):
         raise HTTPException(
@@ -226,9 +222,8 @@ def read_all_users(
 def read_user(
     user_id: int,
     db: Session = Depends(get_db),
-    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, account_id=auth_user.account_id, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
@@ -239,13 +234,12 @@ def update_user(
     user_id: int,
     user: schemas.UserPatch,
     db: Session = Depends(get_db),
-    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, account_id=auth_user.account_id, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     db_user = crud.update_user(
-        db, account_id=auth_user.account_id, user_id=user_id, user=user
+        db, user_id=user_id, user=user
     )
     return db_user
 
@@ -254,12 +248,11 @@ def update_user(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, account_id=auth_user.account_id, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    crud.delete_user(db=db, account_id=auth_user.account_id, user_id=user_id)
+    crud.delete_user(db=db, user_id=user_id)
     return {"ok": True}
 
 
@@ -319,16 +312,16 @@ def login(login: schemas.LoginSchema, db: Session = Depends(get_db)):
 
 
 @app.post("/refresh", response_model=schemas.TokenSchema)
-def refresh(token: schemas.RefreshSchema, db: Session = Depends(get_db)):
+def refresh(token: schemas.RefreshSchema):
     decoded_token = auth.decodeJWT(token=token.refresh_token)
     if decoded_token is None:
         raise HTTPException(status_code=403, detail="Invalid token or expired token.")
     if decoded_token.is_access_token != False:
         raise HTTPException(status_code=403, detail="Invalid token or expired token.")
-    token = auth.generate_refresh_token(
+    refresh_token = auth.generate_refresh_token(
         old_token=token.refresh_token, decoded_token=decoded_token
     )
-    return token
+    return refresh_token
 
 
 # CreateSuperadmin just for Debugging
