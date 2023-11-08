@@ -8,7 +8,6 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-  DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
 
 jobs:
   deploy:
@@ -46,6 +45,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: DATABASE_URL=${{ secrets.DEV_DATABASE_URL }}
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy --local-only --image ghcr.io/dostini/api:fix-database-url
