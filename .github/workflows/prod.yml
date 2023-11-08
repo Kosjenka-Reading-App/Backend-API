@@ -34,6 +34,9 @@ jobs:
         with:
           images: ghcr.io/dostini/api
 
+      - name: Crate env file with secrets
+        run: echo "DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" >> .env
+
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
@@ -42,7 +45,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # TODO: postgres build-args: BACKEND_URL=${{ secrets.BACKEND_URL_DEV }}
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: cp fly.prod.toml fly.toml && flyctl deploy --local-only --image ghcr.io/dostini/api:main
