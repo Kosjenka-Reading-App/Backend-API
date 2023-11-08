@@ -6,6 +6,12 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 
+class AccountType(str, enum.Enum):
+    Regular = "regular"
+    Admin = "admin"
+    Superadmin = "superadmin"
+
+
 exercise_category = Table(
     "exercise_category",
     Base.metadata,
@@ -38,8 +44,7 @@ class Account(Base):
     id_account = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String, unique=True)
     password = Column(String)
-    is_user = Column(Boolean)
-    is_super_admin = Column(Boolean)
+    account_category = Column(Enum(AccountType))
 
 
 class User(Base):

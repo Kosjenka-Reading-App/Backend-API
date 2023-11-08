@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
+import models
 
 import models
 
@@ -54,15 +55,12 @@ class FullExerciseResponse(ExerciseResponse):
 class AccountIn(BaseModel):
     email: EmailStr
     password: str
-    is_user: bool
-    is_super_admin: bool
 
 
 class AccountOut(BaseModel):
     id_account: int
     email: EmailStr
-    is_user: bool
-    is_super_admin: bool
+    account_category: str
 
 
 # Users
@@ -79,6 +77,26 @@ class UserPatch(BaseModel):
 
 
 class UserCreate(BaseModel):
-    id_account: int
     username: str
     proficiency: float | None = 0.0
+
+
+# Auth
+class LoginSchema(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class TokenSchema(BaseModel):
+    access_token: str
+    refresh_token: str
+
+
+class AuthSchema(BaseModel):
+    account_id: int
+    account_category: int
+    is_access_token: bool
+
+
+class RefreshSchema(BaseModel):
+    refresh_token: str

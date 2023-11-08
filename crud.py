@@ -82,16 +82,30 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     return stored_exercise
 
 
+# Accounts
 def password_hasher(raw_password: str):
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(raw_password.encode("utf-8"), salt)
     return hashed_password.decode("utf-8")
 
 
-def get_account(db: Session, account_id: int):
-    return (
-        db.query(models.Account).filter(models.Account.id_account == account_id).first()
-    )
+def get_account(db: Session, auth_user: schemas.AuthSchema, account_id: int):
+    if models.AccountType(auth_user.account_category) == models.AccountType.Superadmin:
+        return (
+            db.query(models.Account)
+            .filter(
+                models.Account.id_account == account_id,
+                models.Account.account_category == models.AccountType.Admin,
+            )
+            .first()
+        )
+    if auth_user.account_id == account_id:
+        return (
+            db.query(models.Account)
+            .filter(models.Account.id_account == account_id)
+            .first()
+        )
+    return None
 
 
 def delete_account(db: Session, account_id: int):
@@ -114,15 +128,20 @@ def update_account(db: Session, account_id: int, account: schemas.AccountOut):
 
 
 def get_accounts(db: Session):
-    return db.query(models.Account).all()
+    return (
+        db.query(models.Account)
+        .filter(models.Account.account_category == models.AccountType.Admin)
+        .all()
+    )
 
 
-def save_user(db: Session, account_in: schemas.AccountIn):
+def create_account(
+    db: Session, account_in: schemas.AccountIn, account_category: models.AccountType
+):
     hashed_password = password_hasher(account_in.password)
     account_db = models.Account(
         email=account_in.email,
-        is_user=account_in.is_user,
-        is_super_admin=account_in.is_super_admin,
+        account_category=account_category,
         password=hashed_password,
     )
     db.add(account_db)
@@ -132,8 +151,14 @@ def save_user(db: Session, account_in: schemas.AccountIn):
 
 
 # Users
-def get_users(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.User).offset(skip).limit(limit).all()
+def get_users(db: Session, account_id: int, skip: int = 0, limit: int = 100):
+    return (
+        db.query(models.User)
+        .filter(models.User.id_account == account_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_user(db: Session, user_id: int):

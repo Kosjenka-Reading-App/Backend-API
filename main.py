@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import crud
 import models
 import schemas
+import auth
+from auth_bearer import JWTBearer
 from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -36,9 +38,20 @@ def health_check():
 
 
 @app.post("/exercises/", response_model=schemas.FullExerciseResponse)
-def create_exercise(exercise: schemas.ExerciseCreate, db: Session = Depends(get_db)):
-    db_exercise = crud.create_exercise(db=db, exercise=exercise)
-    return db_exercise
+def create_exercise(
+    exercise: schemas.ExerciseCreate,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    if (
+        models.AccountType(auth_user.account_category) != models.AccountType.Admin
+        and models.AccountType(auth_user.account_category)
+        != models.AccountType.Superadmin
+    ):
+        raise HTTPException(
+            status_code=401, detail="Permission only for Admins and Superadmins"
+        )
+    return crud.create_exercise(db=db, exercise=exercise)
 
 
 @app.get("/exercises/", response_model=list[schemas.ExerciseResponse])
@@ -51,6 +64,7 @@ def read_exercises(
     category: str | None = None,
     title_like: str | None = None,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     if category:
         db_category = crud.get_category(db, category)
@@ -72,7 +86,11 @@ def read_exercises(
 
 
 @app.get("/exercises/{exercise_id}", response_model=schemas.FullExerciseResponse)
-def read_exercise(exercise_id: int, db: Session = Depends(get_db)):
+def read_exercise(
+    exercise_id: int,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
@@ -80,7 +98,19 @@ def read_exercise(exercise_id: int, db: Session = Depends(get_db)):
 
 
 @app.delete("/exercises/{exercise_id}")
-def delete_exercise(exercise_id: int, db: Session = Depends(get_db)):
+def delete_exercise(
+    exercise_id: int,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    if (
+        models.AccountType(auth_user.account_category) != models.AccountType.Admin
+        and amodels.AccountType(auth_user.account_category)
+        != models.AccountType.Superadmin
+    ):
+        raise HTTPException(
+            status_code=401, detail="Permission only for Admins and Superadmins"
+        )
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
@@ -90,8 +120,19 @@ def delete_exercise(exercise_id: int, db: Session = Depends(get_db)):
 
 @app.patch("/exercises/{exercise_id}", response_model=schemas.FullExerciseResponse)
 def update_exercise(
-    exercise_id: int, exercise: schemas.ExercisePatch, db: Session = Depends(get_db)
+    exercise_id: int,
+    exercise: schemas.ExercisePatch,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
+    if (
+        models.AccountType(auth_user.account_category) != models.AccountType.Admin
+        and models.AccountType(auth_user.account_category)
+        != models.AccountType.Superadmin
+    ):
+        raise HTTPException(
+            status_code=401, detail="Permission only for Admins and Superadmins"
+        )
     stored_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if stored_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
@@ -102,20 +143,53 @@ def update_exercise(
 
 
 @app.post("/accounts/", response_model=schemas.AccountOut)
-def create_account(account_in: schemas.AccountIn, db: Session = Depends(get_db)):
-    account_saved = crud.save_user(db, account_in)
+def create_account(
+    account_in: schemas.AccountIn,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    if models.AccountType(auth_user.account_category) != models.AccountType.Superadmin:
+        raise HTTPException(status_code=401, detail="Permission only for Superadmins")
+    account_saved = crud.create_account(db, account_in, models.AccountType.Admin)
+    return account_saved
+
+
+@app.post("/register/", response_model=schemas.AccountOut)
+def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db)):
+    account_saved = crud.create_account(db, account_in, models.AccountType.Regular)
     return account_saved
 
 
 @app.get("/accounts/", response_model=list[schemas.AccountOut])
-def get_all_accounts(db: Session = Depends(get_db)):
+def get_all_accounts(
+    db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())
+):
+    if models.AccountType(auth_user.account_category) != models.AccountType.Superadmin:
+        raise HTTPException(status_code=401, detail="Permission only for Superadmins")
     accounts = crud.get_accounts(db)
     return accounts
 
 
+@app.get("/accounts/{account_id}")
+def get_account(
+    account_id: int,
+    account: schemas.AccountIn,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    account = crud.get_account(db, auth_user=auth_user, account_id=account_id)
+    if account is None:
+        raise HTTPException(status_code=404, detail="account not found")
+    return account
+
+
 @app.delete("/accounts/{account_id}")
-def delete_account(account_id: int, db: Session = Depends(get_db)):
-    db_account = crud.get_account(db, account_id=account_id)
+def delete_account(
+    account_id: int,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    db_account = crud.get_account(db, auth_user=auth_user, account_id=account_id)
     if db_account is None:
         raise HTTPException(status_code=404, detail="account not found")
     crud.delete_account(db=db, account_id=account_id)
@@ -124,9 +198,12 @@ def delete_account(account_id: int, db: Session = Depends(get_db)):
 
 @app.patch("/accounts/{account_id}")
 def update_account(
-    account_id: int, account: schemas.AccountIn, db: Session = Depends(get_db)
+    account_id: int,
+    account: schemas.AccountIn,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    account = crud.get_account(db, account_id=account_id)
+    account = crud.get_account(db, auth_user=auth_user, account_id=account_id)
     if account is None:
         raise HTTPException(status_code=404, detail="account not found")
     changed_account = crud.update_account(db, account_id=account_id, account=account)
@@ -135,40 +212,64 @@ def update_account(
 
 # User
 @app.get("/users/", response_model=list[schemas.UserSchema])
-def read_all_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
+def read_all_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    users = crud.get_users(db, account_id=auth_user.account_id, skip=skip, limit=limit)
     return users
 
 
 @app.get("/users/{user_id}", response_model=schemas.UserSchema)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
+def read_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    db_user = crud.get_user(db, account_id=auth_user.account_id, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
 
 @app.patch("/users/{user_id}")
-def update_user(user_id: int, user: schemas.UserPatch, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
+def update_user(
+    user_id: int,
+    user: schemas.UserPatch,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    db_user = crud.get_user(db, account_id=auth_user.account_id, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    db_user = crud.update_user(db, user_id=user_id, user=user)
+    db_user = crud.update_user(
+        db, account_id=auth_user.account_id, user_id=user_id, user=user
+    )
     return db_user
 
 
 @app.delete("/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    db_user = crud.get_user(db, account_id=auth_user.account_id, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    crud.delete_user(db=db, user_id=user_id)
+    crud.delete_user(db=db, account_id=auth_user.account_id, user_id=user_id)
     return {"ok": True}
 
 
 @app.post("/users/", response_model=schemas.UserSchema)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db=db, user=user)
+def create_user(
+    user: schemas.UserCreate,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    return crud.create_user(db=db, account_id=auth_user.account_id, user=user)
 
 
 @app.post("/categories/{category}", response_model=schemas.Category)
@@ -205,3 +306,35 @@ def update_category(
         db, old_category=old_category, new_category=new_category
     )
     return updated_category
+
+
+# Auth
+@app.post("/login", response_model=schemas.TokenSchema)
+def login(login: schemas.LoginSchema, db: Session = Depends(get_db)):
+    auth_account = auth.get_user(db=db, login=login)
+    if auth_account is None:
+        raise HTTPException(status_code=400, detail="Username/Password wrong")
+    token = auth.generateToken(account=auth_account)
+    return token
+
+
+@app.post("/refresh", response_model=schemas.TokenSchema)
+def refresh(token: schemas.RefreshSchema, db: Session = Depends(get_db)):
+    decoded_token = auth.decodeJWT(token=token.refresh_token)
+    if decoded_token is None:
+        raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+    if decoded_token.is_access_token != False:
+        raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+    token = auth.generate_refresh_token(
+        old_token=token.refresh_token, decoded_token=decoded_token
+    )
+    return token
+
+
+# CreateSuperadmin just for Debugging
+@app.post("/createsuperadmin/", response_model=schemas.AccountOut)
+def createsuperadmin_only_for_debugging(
+    account_in: schemas.AccountIn, db: Session = Depends(get_db)
+):
+    account_saved = crud.create_account(db, account_in, models.AccountType.Superadmin)
+    return account_saved
