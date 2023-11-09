@@ -149,6 +149,11 @@ def create_account(
     return account_db
 
 
+def email_is_registered(db: Session, email: str):
+    db_account = db.query(models.Account).filter(models.Account.email == email).first()
+    return db_account is not None
+
+
 # Users
 def get_users(db: Session, account_id: int, skip: int = 0, limit: int = 100):
     return (

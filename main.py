@@ -146,12 +146,16 @@ def create_account(
 ):
     if models.AccountType(auth_user.account_category) != models.AccountType.Superadmin:
         raise HTTPException(status_code=401, detail="Permission only for Superadmins")
+    if crud.email_is_registered(db, account_in.email):
+        raise HTTPException(status_code=409, detail="Email already registered")
     account_saved = crud.create_account(db, account_in, models.AccountType.Admin)
     return account_saved
 
 
 @app.post("/register/", response_model=schemas.AccountOut)
 def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db)):
+    if crud.email_is_registered(db, account_in.email):
+        raise HTTPException(status_code=409, detail="Email already registered")
     account_saved = crud.create_account(db, account_in, models.AccountType.Regular)
     return account_saved
 
@@ -329,5 +333,7 @@ def refresh(token: schemas.RefreshSchema):
 def createsuperadmin_only_for_debugging(
     account_in: schemas.AccountIn, db: Session = Depends(get_db)
 ):
+    if crud.email_is_registered(db, account_in.email):
+        raise HTTPException(status_code=409, detail="Email already registered")
     account_saved = crud.create_account(db, account_in, models.AccountType.Superadmin)
     return account_saved
