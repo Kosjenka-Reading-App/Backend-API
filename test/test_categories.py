@@ -47,7 +47,9 @@ def test_delete_category():
 
 
 def test_create_exercise_with_category(admin_token):
-    client.post("http://localhost:8000/categories/cats", headers=auth_header(admin_token))
+    client.post(
+        "http://localhost:8000/categories/cats", headers=auth_header(admin_token)
+    )
     categories = client.get("http://localhost:8000/categories/").json()
     assert "cats" in categories
     assert "dogs" not in categories
@@ -59,7 +61,9 @@ def test_create_exercise_with_category(admin_token):
         "category": ["cats", "dogs"],
     }
     created_exercise = client.post(
-        "http://localhost:8000/exercises", json=new_exercise, headers=auth_header(admin_token)
+        "http://localhost:8000/exercises",
+        json=new_exercise,
+        headers=auth_header(admin_token),
     ).json()
     for key in new_exercise:
         if key == "category":
@@ -82,7 +86,11 @@ def test_update_exercise_with_category(admin_token):
         f"http://localhost:8000/exercises/{exercise_id}"
     ).json()
     body = {"category": ["cats", "mice"]}
-    client.patch(f"http://localhost:8000/exercises/{exercise_id}", json=body, headers=auth_header(admin_token)).json()
+    client.patch(
+        f"http://localhost:8000/exercises/{exercise_id}",
+        json=body,
+        headers=auth_header(admin_token),
+    ).json()
     updated_exercise = client.get(
         f"http://localhost:8000/exercises/{exercise_id}"
     ).json()
@@ -103,7 +111,9 @@ def test_rename_category(admin_token):
     assert set(categories) == {"cats", "dogs", "mice"}
     body = {"category": "one mouse"}
     updated_category = client.patch(
-        "http://localhost:8000/categories/mice?", json=body, headers=auth_header(admin_token)
+        "http://localhost:8000/categories/mice?",
+        json=body,
+        headers=auth_header(admin_token),
     ).json()
     assert updated_category["category"] == "one mouse"
     categories = client.get("http://localhost:8000/categories").json()
