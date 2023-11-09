@@ -11,8 +11,7 @@ class ExerciseOrderBy(Enum):
     category = "category"
     complexity = "complexity"
     title = "title"
-    date = "date" 
-    
+    date = "date"
 
 
 class ExerciseFilterBy(Enum):
@@ -53,7 +52,7 @@ class ExercisePatch(BaseModel):
 
 class FullExerciseResponse(ExerciseResponse):
     text: str
-    #date:datetime
+    # date:datetime
 
 
 class AccountIn(BaseModel):
