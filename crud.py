@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import exc
 
 import models, schemas
 import bcrypt
