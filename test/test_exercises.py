@@ -1,3 +1,5 @@
+from datetime import datetime
+import time
 import pytest
 
 from conftest import client
@@ -172,3 +174,43 @@ def test_filter_category():
     exercises = client.get("http://localhost:8000/exercises?category=something").json()
     assert len(exercises) == 0
     test_delete_exercise()
+
+
+def test_update_exercise_modifies_date():
+    # Create a superadmin
+    account_data = {
+        "email": "superadmin1@gmail.com",
+        "password": "superadminpassword"
+    }
+    # if superadmin1@gmail.com is already in database, this will fail 
+    res_admin = client.post("/createsuperadmin/", json=account_data)
+    assert res_admin.status_code == 200
+    # Login
+    res_login = client.post("/login/",json=account_data)
+    assert res_login.status_code == 200
+    jwt_token = res_login.json()["access_token"]
+    # Create an exercise
+    exercise_data = {
+        "title": "Title Exercise",
+        "complexity":"easy",
+        "category": ["new"],
+        "text": "This is a test exercise"
+    }
+    headers = {
+        "Authorization": f"Bearer {jwt_token}"
+    }
+    res_exercise = client.post("http://localhost/exercises/", json=exercise_data, headers=headers)
+    assert res_exercise.status_code == 200
+    first_exercise = res_exercise.json()
+    first_date = first_exercise["date"]
+    time.sleep(1)
+    # Modify the exercise
+    exercise_data = {"title": "Updated Exercise Title"}
+    exercise_id = first_exercise["id"]
+    response = client.patch(f"http://localhost/exercises/{exercise_id}", json=exercise_data, headers=headers)
+    assert response.status_code == 200
+    updated_exercise = response.json()
+    assert updated_exercise is not None
+    date_obj1 = datetime.fromisoformat(first_date)
+    date_obj2 = datetime.fromisoformat(updated_exercise["date"] )
+    assert date_obj1 < date_obj2

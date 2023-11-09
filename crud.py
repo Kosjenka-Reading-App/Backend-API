@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import exc
 
 import models, schemas
 import bcrypt
@@ -47,15 +48,19 @@ def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
         text=exercise.text,
         complexity=exercise.complexity,
     )
-    db.add(db_exercise)
-    if exercise.category:
-        for category in exercise.category:
-            db_category = get_category(db, category)
-            if db_category is None:
-                db_category = create_category(db, category)
-            db_exercise.category.append(db_category)
-    db.commit()
-    db.refresh(db_exercise)
+    try:
+        db.add(db_exercise)
+        if exercise.category:
+            for category in exercise.category:
+                db_category = get_category(db, category)
+                if db_category is None:
+                    db_category = create_category(db, category)
+                db_exercise.category.append(db_category)
+        db.commit()
+        db.refresh(db_exercise)
+    except exc.SQLAlchemyError as e:
+        db.rollback()
+        raise
     return db_exercise
 
 

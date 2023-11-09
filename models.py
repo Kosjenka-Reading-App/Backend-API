@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey, Enum, DateTime, func
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -36,6 +36,7 @@ class Exercise(Base):
     category = relationship(
         "Category", secondary=exercise_category, back_populates="exercises"
     )
+    date = Column(DateTime, default=func.now(), onupdate=func.now())  
 
 
 class Account(Base):

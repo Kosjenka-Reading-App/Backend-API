@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
-import models
+from datetime import datetime
 
 import models
 
@@ -11,6 +11,8 @@ class ExerciseOrderBy(Enum):
     category = "category"
     complexity = "complexity"
     title = "title"
+    date = "date" 
+    
 
 
 class ExerciseFilterBy(Enum):
@@ -32,6 +34,7 @@ class ExerciseResponse(BaseModel):
     title: str
     complexity: models.Complexity | None
     category: List[Category]
+    date: datetime
 
 
 class ExerciseCreate(BaseModel):
@@ -50,6 +53,7 @@ class ExercisePatch(BaseModel):
 
 class FullExerciseResponse(ExerciseResponse):
     text: str
+    #date:datetime
 
 
 class AccountIn(BaseModel):
