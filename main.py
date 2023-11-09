@@ -30,6 +30,15 @@ def get_db():
         db.close()
 
 
+def validate_access_level(auth_user: schemas.AuthSchema, access_level: models.AccountType):
+    user_level = models.ACCESS_LEVELS[auth_user.account_category]
+    required_level = models.ACCESS_LEVELS[access_level]
+    if user_level < required_level:
+        raise HTTPException(
+            status_code=401, detail=f"Permission only for {[lvl for lvl in models.ACCESS_LEVELS if models.ACCESS_LEVELS[lvl] > user_level]}"
+        )
+
+
 @app.get("/healthz", status_code=200)
 def health_check():
     return {"status": "ok"}
@@ -41,14 +50,7 @@ def create_exercise(
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    if (
-        models.AccountType(auth_user.account_category) != models.AccountType.Admin
-        and models.AccountType(auth_user.account_category)
-        != models.AccountType.Superadmin
-    ):
-        raise HTTPException(
-            status_code=401, detail="Permission only for Admins and Superadmins"
-        )
+    validate_access_level(auth_user, models.AccountType.Admin)
     return crud.create_exercise(db=db, exercise=exercise)
 
 
@@ -99,14 +101,7 @@ def delete_exercise(
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    if (
-        models.AccountType(auth_user.account_category) != models.AccountType.Admin
-        and models.AccountType(auth_user.account_category)
-        != models.AccountType.Superadmin
-    ):
-        raise HTTPException(
-            status_code=401, detail="Permission only for Admins and Superadmins"
-        )
+    validate_access_level(auth_user, models.AccountType.Admin)
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
@@ -121,14 +116,7 @@ def update_exercise(
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    if (
-        models.AccountType(auth_user.account_category) != models.AccountType.Admin
-        and models.AccountType(auth_user.account_category)
-        != models.AccountType.Superadmin
-    ):
-        raise HTTPException(
-            status_code=401, detail="Permission only for Admins and Superadmins"
-        )
+    validate_access_level(auth_user, models.AccountType.Admin)
     stored_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if stored_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
@@ -144,8 +132,7 @@ def create_account(
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    if models.AccountType(auth_user.account_category) != models.AccountType.Superadmin:
-        raise HTTPException(status_code=401, detail="Permission only for Superadmins")
+    validate_access_level(auth_user, models.AccountType.Superadmin)
     if crud.email_is_registered(db, account_in.email):
         raise HTTPException(status_code=409, detail="Email already registered")
     account_saved = crud.create_account(db, account_in, models.AccountType.Admin)
@@ -164,8 +151,7 @@ def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db
 def get_all_accounts(
     db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())
 ):
-    if models.AccountType(auth_user.account_category) != models.AccountType.Superadmin:
-        raise HTTPException(status_code=401, detail="Permission only for Superadmins")
+    validate_access_level(auth_user, models.AccountType.Superadmin)
     accounts = crud.get_accounts(db)
     return accounts
 
