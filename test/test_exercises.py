@@ -1,11 +1,9 @@
-import pytest
+from conftest import client 
+from utils import auth_header
 
-from conftest import client
 
-
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_create_exercise():
-    exercises = client.get("http://localhost:8000/exercises").json()
+def test_create_exercise(admin_token):
+    exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     exercise_count = len(exercises)
     new_exercise = {
         "title": "Title of the exercise",
@@ -13,57 +11,53 @@ def test_create_exercise():
         "text": "Text of the exercise",
     }
     created_exercise = client.post(
-        "http://localhost:8000/exercises", json=new_exercise
+        "http://localhost:8000/exercises", json=new_exercise, headers=auth_header(admin_token)
     ).json()
     for key in new_exercise:
         assert created_exercise[key] == new_exercise[key]
-    exercises = client.get("http://localhost:8000/exercises").json()
+    exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     assert len(exercises) == exercise_count + 1
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_create_exercise_without_complexity():
-    exercises = client.get("http://localhost:8000/exercises").json()
+def test_create_exercise_without_complexity(admin_token):
+    exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     exercise_count = len(exercises)
     new_exercise = {
         "title": "Title of another exercise",
         "text": "Text of another exercise",
     }
     created_exercise = client.post(
-        "http://localhost:8000/exercises", json=new_exercise
+        "http://localhost:8000/exercises", json=new_exercise, headers=auth_header(admin_token)
     ).json()
     for key in new_exercise:
         assert created_exercise[key] == new_exercise[key]
     assert created_exercise["complexity"] == None
-    exercises = client.get("http://localhost:8000/exercises").json()
+    exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     assert len(exercises) == exercise_count + 1
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_get_exercises():
-    exercises = client.get("http://localhost:8000/exercises").json()
+def test_get_exercises(admin_token):
+    exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     assert set(exercises[0].keys()) == {"id", "title", "complexity", "category"}
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_get_exercise():
-    exercises = client.get("http://localhost:8000/exercises").json()
+def test_get_exercise(admin_token):
+    exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     exercise_id = exercises[0]["id"]
-    exercise = client.get(f"http://localhost:8000/exercises/{exercise_id}").json()
+    exercise = client.get(f"http://localhost:8000/exercises/{exercise_id}", headers=auth_header(admin_token)).json()
     assert set(exercise.keys()) == {"id", "title", "category", "complexity", "text"}
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_update_exercise():
-    exercises = client.get("http://localhost:8000/exercises").json()
+def test_update_exercise(admin_token):
+    exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     exercise_id = exercises[0]["id"]
     original_exercise = client.get(
-        f"http://localhost:8000/exercises/{exercise_id}"
+        f"http://localhost:8000/exercises/{exercise_id}", headers=auth_header(admin_token)
     ).json()
     body = {"title": "Updated title"}
-    client.patch(f"http://localhost:8000/exercises/{exercise_id}", json=body).json()
+    client.patch(f"http://localhost:8000/exercises/{exercise_id}", json=body, headers=auth_header(admin_token)).json()
     updated_exercise = client.get(
-        f"http://localhost:8000/exercises/{exercise_id}"
+        f"http://localhost:8000/exercises/{exercise_id}", headers=auth_header(admin_token)
     ).json()
     for key in updated_exercise:
         if key == "title":
@@ -72,54 +66,50 @@ def test_update_exercise():
         assert updated_exercise[key] == original_exercise[key]
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_sort_exercises():
-    exercises = client.get("http://localhost:8000/exercises?order_by=id")
+def test_sort_exercises(admin_token):
+    exercises = client.get("http://localhost:8000/exercises?order_by=id", headers=auth_header(admin_token))
     assert exercises.status_code == 422
-    exercises = client.get("http://localhost:8000/exercises?order_by=title").json()
+    exercises = client.get("http://localhost:8000/exercises?order_by=title", headers=auth_header(admin_token)).json()
     titles = [exercise["title"] for exercise in exercises]
     assert titles == sorted(titles)
     exercises = client.get(
-        "http://localhost:8000/exercises?order_by=title&order=desc"
+        "http://localhost:8000/exercises?order_by=title&order=desc", headers=auth_header(admin_token)
     ).json()
     titles = [exercise["title"] for exercise in exercises]
     assert titles == sorted(titles)[::-1]
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_search_exercises():
-    exercises = client.get("http://localhost:8000/exercises?title_like=another").json()
+def test_search_exercises(admin_token):
+    exercises = client.get("http://localhost:8000/exercises?title_like=another", headers=auth_header(admin_token)).json()
     for exercise in exercises:
         assert exercise["title"] == "Title of another exercise"
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_delete_exercise():
-    exercises = client.get("http://localhost:8000/exercises").json()
+def test_delete_exercise(admin_token):
+    exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     assert len(exercises) > 0
     exercise_ids = {ex["id"] for ex in exercises}
     while exercise_ids:
         exercise_id = exercise_ids.pop()
-        client.delete(f"http://localhost:8000/exercises/{exercise_id}").json()
+        client.delete(f"http://localhost:8000/exercises/{exercise_id}", headers=auth_header(admin_token)).json()
         remaining_exercise_ids = {
-            ex["id"] for ex in client.get("http://localhost:8000/exercises").json()
+            ex["id"] for ex in client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
         }
         assert len(remaining_exercise_ids) == len(exercise_ids)
         assert exercise_id not in remaining_exercise_ids
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_sort_complexity():
+def test_sort_complexity(admin_token):
     for complexity in ["hard", "easy", "medium", "hard", "easy", "medium"]:
         new_exercise = {
             "title": "Title of the exercise",
             "complexity": complexity,
             "text": "Text of the exercise",
         }
-        resp = client.post("http://localhost:8000/exercises", json=new_exercise)
+        resp = client.post("http://localhost:8000/exercises", json=new_exercise, headers=auth_header(admin_token))
         assert resp.status_code == 200
     exercises = client.get(
-        "http://localhost:8000/exercises?order_by=complexity&order=asc"
+        "http://localhost:8000/exercises?order_by=complexity&order=asc", headers=auth_header(admin_token)
     ).json()
     assert [ex["complexity"] for ex in exercises] == [
         "easy",
@@ -130,7 +120,7 @@ def test_sort_complexity():
         "hard",
     ]
     exercises = client.get(
-        "http://localhost:8000/exercises?order_by=complexity&order=desc"
+        "http://localhost:8000/exercises?order_by=complexity&order=desc", headers=auth_header(admin_token)
     ).json()
     assert [ex["complexity"] for ex in exercises] == [
         "hard",
@@ -142,33 +132,31 @@ def test_sort_complexity():
     ]
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_filter_complexity():
+def test_filter_complexity(admin_token):
     for complexity in ["hard", "easy", "medium", "hard", "easy", "medium"]:
         new_exercise = {
             "title": "Title of the exercise",
             "complexity": complexity,
             "text": "Text of the exercise",
         }
-        resp = client.post("http://localhost:8000/exercises", json=new_exercise)
+        resp = client.post("http://localhost:8000/exercises", json=new_exercise, headers=auth_header(admin_token))
         assert resp.status_code == 200
-    exercises = client.get("http://localhost:8000/exercises?complexity=hard").json()
+    exercises = client.get("http://localhost:8000/exercises?complexity=hard", headers=auth_header(admin_token)).json()
     assert {ex["complexity"] for ex in exercises} == {"hard"}
-    test_delete_exercise()
+    test_delete_exercise(admin_token)
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_filter_category():
+def test_filter_category(admin_token):
     for category in [["cats"], ["dogs"], ["cats", "dogs"]]:
         new_exercise = {
             "title": "Title of the exercise",
             "category": category,
             "text": "Text of the exercise",
         }
-        resp = client.post("http://localhost:8000/exercises", json=new_exercise)
+        resp = client.post("http://localhost:8000/exercises", json=new_exercise, headers=auth_header(admin_token))
         assert resp.status_code == 200
-    exercises = client.get("http://localhost:8000/exercises?category=cats").json()
+    exercises = client.get("http://localhost:8000/exercises?category=cats", headers=auth_header(admin_token)).json()
     assert {ex["id"] for ex in exercises} == {1, 3}
-    exercises = client.get("http://localhost:8000/exercises?category=something").json()
+    exercises = client.get("http://localhost:8000/exercises?category=something", headers=auth_header(admin_token)).json()
     assert len(exercises) == 0
-    test_delete_exercise()
+    test_delete_exercise(admin_token)

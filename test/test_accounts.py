@@ -1,33 +1,28 @@
 from conftest import client
+from utils import auth_header
 
-import pytest
 
-
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_create_account():
-    accounts = client.get("http://localhost:8000/accounts").json()
+def test_create_account(superadmin_token):
+    accounts = client.get("http://localhost:8000/accounts", headers=auth_header(superadmin_token)).json()
     account_count = len(accounts)
     new_account = {
         "email": "email@gmail.com",
         "password": "secret",
-        "is_user": True,
-        "is_super_admin": False,
     }
     _ = client.post(
-        "http://localhost:8000/accounts", json=new_account
+        "http://localhost:8000/accounts", json=new_account, headers=auth_header(superadmin_token)
     ).json()
-    accounts = client.get("http://localhost:8000/accounts").json()
+    accounts = client.get("http://localhost:8000/accounts", headers=auth_header(superadmin_token)).json()
     assert len(accounts) == account_count + 1
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_update_account():
-    accounts = client.get("http://localhost:8000/accounts").json()
+def test_update_account(superadmin_token):
+    accounts = client.get("http://localhost:8000/accounts", headers=auth_header(superadmin_token)).json()
     account_id = accounts[0]["id_account"]
-    original_account = client.get(f"http://localhost:8000/accounts/{account_id}").json()
+    original_account = client.get(f"http://localhost:8000/accounts/{account_id}", headers=auth_header(superadmin_token)).json()
     body = {"email": "update@gmail.com"}
-    client.patch(f"http://localhost:8000/accounts/{account_id}", json=body).json()
-    updated_account = client.get(f"http://localhost:8000/accounts/{account_id}").json()
+    client.patch(f"http://localhost:8000/accounts/{account_id}", json=body, headers=auth_header(superadmin_token)).json()
+    updated_account = client.get(f"http://localhost:8000/accounts/{account_id}", headers=auth_header(superadmin_token)).json()
     for key in updated_account:
         if key == "email":
             assert updated_account[key] == "update@gmail.com"
@@ -35,17 +30,16 @@ def test_update_account():
         assert updated_account[key] == original_account[key]
 
 
-@pytest.mark.skip(reason="need to adapt tests for auth tokens")
-def test_delete_account():
-    accounts = client.get("http://localhost:8000/accounts").json()
+def test_delete_account(superadmin_token):
+    accounts = client.get("http://localhost:8000/accounts", headers=auth_header(superadmin_token)).json()
     assert len(accounts) > 0
     account_ids = {ex["id_account"] for ex in accounts}
     while account_ids:
         account_id = account_ids.pop()
-        client.delete(f"http://localhost:8000/accounts/{account_id}").json()
+        client.delete(f"http://localhost:8000/accounts/{account_id}", headers=auth_header(superadmin_token)).json()
         remaining_account_ids = {
             ex["id_account"]
-            for ex in client.get("http://localhost:8000/accounts").json()
+            for ex in client.get("http://localhost:8000/accounts", headers=auth_header(superadmin_token)).json()
         }
         assert len(remaining_account_ids) == len(account_ids)
         assert account_id not in remaining_account_ids
