@@ -6,6 +6,13 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 
+ACCESS_LEVELS = {
+    "superadmin": 3,
+    "admin": 2,
+    "regular": 1,
+}
+
+
 class AccountType(str, enum.Enum):
     Regular = "regular"
     Admin = "admin"
