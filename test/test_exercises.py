@@ -41,14 +41,14 @@ def test_create_exercise_without_complexity(admin_token):
 
 def test_get_exercises(admin_token):
     exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
-    assert set(exercises[0].keys()) == {"id", "title", "complexity", "category"}
+    assert set(exercises[0].keys()) == {"id", "title", "complexity", "category", "date"}
 
 
 def test_get_exercise(admin_token):
     exercises = client.get("http://localhost:8000/exercises", headers=auth_header(admin_token)).json()
     exercise_id = exercises[0]["id"]
     exercise = client.get(f"http://localhost:8000/exercises/{exercise_id}", headers=auth_header(admin_token)).json()
-    assert set(exercise.keys()) == {"id", "title", "category", "complexity", "text"}
+    assert set(exercise.keys()) == {"id", "title", "category", "complexity", "text", "date"}
 
 
 def test_update_exercise(admin_token):
