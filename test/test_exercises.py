@@ -101,7 +101,9 @@ def test_update_exercise(admin_token):
             assert updated_exercise[key] == "Updated title"
             continue
         if key == "date":
-            assert datetime.fromisoformat(updated_exercise[key]) >= datetime.fromisoformat(original_exercise[key])
+            assert datetime.fromisoformat(
+                updated_exercise[key]
+            ) >= datetime.fromisoformat(original_exercise[key])
             continue
         assert updated_exercise[key] == original_exercise[key]
 

@@ -273,11 +273,7 @@ def read_categories(
     db: Session = Depends(get_db),
 ):
     db_categories = crud.get_categories(
-        db,
-        skip=skip,
-        limit=limit,
-        order=order,
-        name_like=name_like
+        db, skip=skip, limit=limit, order=order, name_like=name_like
     )
     return db_categories
 

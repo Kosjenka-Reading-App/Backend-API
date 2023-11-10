@@ -124,8 +124,13 @@ def test_sort_categories():
     categories = client.get("http://localhost:8000/categories").json()
     print(categories)
     assert len(categories) > 0
-    assert client.get("http://localhost:8000/categories?order=asc").json() == sorted(categories)
-    assert client.get("http://localhost:8000/categories?order=desc").json() == sorted(categories)[::-1]
+    assert client.get("http://localhost:8000/categories?order=asc").json() == sorted(
+        categories
+    )
+    assert (
+        client.get("http://localhost:8000/categories?order=desc").json()
+        == sorted(categories)[::-1]
+    )
 
 
 def test_search_categories():
@@ -133,4 +138,3 @@ def test_search_categories():
     assert len(categories) > 0
     print(categories)
     assert categories[0] == "one mouse"
-

@@ -208,7 +208,13 @@ def _update_exercise_categories(
     exercise.category = new_categories
 
 
-def get_categories(db: Session, skip: int, limit: int, order: schemas.Order | None, name_like: str | None):
+def get_categories(
+    db: Session,
+    skip: int,
+    limit: int,
+    order: schemas.Order | None,
+    name_like: str | None,
+):
     categories = db.query(models.Category)
     if name_like:
         categories = categories.filter(models.Category.category.like(f"%{name_like}%"))
