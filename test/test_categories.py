@@ -118,3 +118,23 @@ def test_rename_category(admin_token):
     assert updated_category["category"] == "one mouse"
     categories = client.get("http://localhost:8000/categories").json()
     assert set(categories) == {"cats", "dogs", "one mouse"}
+
+
+def test_sort_categories():
+    categories = client.get("http://localhost:8000/categories").json()
+    print(categories)
+    assert len(categories) > 0
+    assert client.get("http://localhost:8000/categories?order=asc").json() == sorted(
+        categories
+    )
+    assert (
+        client.get("http://localhost:8000/categories?order=desc").json()
+        == sorted(categories)[::-1]
+    )
+
+
+def test_search_categories():
+    categories = client.get("http://localhost:8000/categories?name_like=use").json()
+    assert len(categories) > 0
+    print(categories)
+    assert categories[0] == "one mouse"

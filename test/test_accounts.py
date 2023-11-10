@@ -11,11 +11,12 @@ def test_create_account(superadmin_token):
         "email": "email@gmail.com",
         "password": "secret",
     }
-    _ = client.post(
+    resp = client.post(
         "http://localhost:8000/accounts",
         json=new_account,
         headers=auth_header(superadmin_token),
-    ).json()
+    )
+    assert resp.status_code == 200
     accounts = client.get(
         "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
     ).json()
@@ -48,12 +49,55 @@ def test_update_account(superadmin_token):
         assert updated_account[key] == original_account[key]
 
 
+def test_search_account(superadmin_token):
+    new_account = {
+        "email": "exercise_master@gmail.com",
+        "password": "secret",
+    }
+    resp = client.post(
+        "http://localhost:8000/accounts",
+        json=new_account,
+        headers=auth_header(superadmin_token),
+    )
+    assert resp.status_code == 200
+    accounts = client.get(
+        "http://localhost:8000/accounts?email_like=email@",
+        headers=auth_header(superadmin_token),
+    ).json()
+    assert len(accounts) == 1
+    assert accounts[0]["email"] == "email@gmail.com"
+
+
+def test_sort_account(superadmin_token):
+    accounts = client.get(
+        "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
+    ).json()
+    assert len(accounts) >= 2
+    sorted_emails = sorted([acc["email"] for acc in accounts])
+    assert sorted_emails == [
+        acc["email"]
+        for acc in client.get(
+            "http://localhost:8000/accounts?order_by=email",
+            headers=auth_header(superadmin_token),
+        ).json()
+    ]
+    assert sorted_emails[::-1] == [
+        acc["email"]
+        for acc in client.get(
+            "http://localhost:8000/accounts?order_by=email&order=desc",
+            headers=auth_header(superadmin_token),
+        ).json()
+    ]
+
+
 def test_delete_account(superadmin_token):
     accounts = client.get(
         "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
     ).json()
     assert len(accounts) > 0
-    account_ids = {ex["id_account"] for ex in accounts}
+    account_ids = {
+        ex["id_account"] for ex in accounts if ex["account_category"] == "admin"
+    }
     while account_ids:
         account_id = account_ids.pop()
         client.delete(
@@ -65,6 +109,7 @@ def test_delete_account(superadmin_token):
             for ex in client.get(
                 "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
             ).json()
+            if ex["account_category"] == "admin"
         }
         assert len(remaining_account_ids) == len(account_ids)
         assert account_id not in remaining_account_ids

@@ -19,6 +19,11 @@ class ExerciseFilterBy(Enum):
     complexity = "complexity"
 
 
+class AccountOrderBy(Enum):
+    account_category = "account_category"
+    email = "email"
+
+
 class Order(Enum):
     asc = "asc"
     desc = "desc"

@@ -1,6 +1,5 @@
 from datetime import datetime
 import time
-import pytest
 from conftest import client
 from utils import auth_header
 
@@ -99,6 +98,11 @@ def test_update_exercise(admin_token):
     for key in updated_exercise:
         if key == "title":
             assert updated_exercise[key] == "Updated title"
+            continue
+        if key == "date":
+            assert datetime.fromisoformat(
+                updated_exercise[key]
+            ) >= datetime.fromisoformat(original_exercise[key])
             continue
         assert updated_exercise[key] == original_exercise[key]
 
