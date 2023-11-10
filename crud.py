@@ -208,8 +208,18 @@ def _update_exercise_categories(
     exercise.category = new_categories
 
 
-def get_categories(db: Session):
-    return [cat.category for cat in db.query(models.Category).all()]
+def get_categories(db: Session, skip: int, limit: int, order: schemas.Order | None, name_like: str | None):
+    categories = db.query(models.Category)
+    if name_like:
+        categories = categories.filter(models.Category.category.like(f"%{name_like}%"))
+    if order:
+        categories = categories.order_by(
+            models.Category.category.desc()
+            if order == schemas.Order.desc
+            else models.Category.category
+        )
+    categories = categories.offset(skip).limit(limit).all()
+    return [cat.category for cat in categories]
 
 
 def get_category(db: Session, category: str):

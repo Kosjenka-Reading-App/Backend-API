@@ -265,8 +265,20 @@ def create_category(category: str, db: Session = Depends(get_db)):
 
 
 @app.get("/categories/", response_model=list[str])
-def read_categories(db: Session = Depends(get_db)):
-    db_categories = crud.get_categories(db)
+def read_categories(
+    skip: int = 0,
+    limit: int = 100,
+    order: schemas.Order | None = None,
+    name_like: str | None = None,
+    db: Session = Depends(get_db),
+):
+    db_categories = crud.get_categories(
+        db,
+        skip=skip,
+        limit=limit,
+        order=order,
+        name_like=name_like
+    )
     return db_categories
 
 
