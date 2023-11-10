@@ -152,10 +152,23 @@ def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db
 
 @app.get("/accounts/", response_model=list[schemas.AccountOut])
 def get_all_accounts(
-    db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())
+    skip: int = 0,
+    limit: int = 100,
+    order_by: schemas.AccountOrderBy | None = None,
+    order: schemas.Order | None = None,
+    email_like: str | None = None,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     validate_access_level(auth_user, models.AccountType.Superadmin)
-    accounts = crud.get_accounts(db)
+    accounts = crud.get_accounts(
+        db,
+        skip=skip,
+        limit=limit,
+        order_by=order_by,
+        order=order,
+        email_like=email_like,
+    )
     return accounts
 
 

@@ -1,6 +1,5 @@
 from datetime import datetime
 import time
-import pytest
 from conftest import client
 from utils import auth_header
 

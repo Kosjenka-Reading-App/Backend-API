@@ -1,13 +1,20 @@
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 import models, schemas
 import bcrypt
 
 
-order_by_column = {
+exercise_order_by_column = {
     schemas.ExerciseOrderBy.category: models.Exercise.category,
     schemas.ExerciseOrderBy.complexity: models.Exercise.complexity,
     schemas.ExerciseOrderBy.title: models.Exercise.title,
+}
+
+
+account_order_by_column = {
+    schemas.AccountOrderBy.email: models.Account.email,
+    schemas.AccountOrderBy.account_category: models.Account.account_category,
 }
 
 
@@ -34,9 +41,9 @@ def get_exercises(
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
     if order_by:
         exercises = exercises.order_by(
-            order_by_column[order_by].desc()
+            exercise_order_by_column[order_by].desc()
             if order == schemas.Order.desc
-            else order_by_column[order_by]
+            else exercise_order_by_column[order_by]
         )
     return exercises.offset(skip).limit(limit).all()
 
@@ -126,12 +133,29 @@ def update_account(db: Session, account_id: int, account: schemas.AccountOut):
     return stored_account
 
 
-def get_accounts(db: Session):
-    return (
-        db.query(models.Account)
-        .filter(models.Account.account_category == models.AccountType.Admin)
-        .all()
+def get_accounts(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    order_by: schemas.AccountOrderBy | None = None,
+    order: schemas.Order | None = None,
+    email_like: str | None = None,
+):
+    accounts = db.query(models.Account).filter(
+        or_(
+            models.Account.account_category == models.AccountType.Admin,
+            models.Account.account_category == models.AccountType.Superadmin,
+        )
     )
+    if email_like:
+        accounts = accounts.filter(models.Account.email.like(f"%{email_like}%"))
+    if order_by:
+        accounts = accounts.order_by(
+            account_order_by_column[order_by].desc()
+            if order == schemas.Order.desc
+            else account_order_by_column[order_by]
+        )
+    return accounts.offset(skip).limit(limit).all()
 
 
 def create_account(
