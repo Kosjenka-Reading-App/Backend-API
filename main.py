@@ -175,7 +175,6 @@ def get_all_accounts(
 @app.get("/accounts/{account_id}")
 def get_account(
     account_id: int,
-    account: schemas.AccountIn,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
@@ -334,6 +333,15 @@ def refresh(token: schemas.RefreshSchema):
         old_token=token.refresh_token, decoded_token=decoded_token
     )
     return refresh_token
+
+
+@app.get("/me", response_model=schemas.AccountOut)
+def me(
+    db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())
+):
+    validate_access_level(auth_user, models.AccountType.Regular)
+    db_account = crud.get_account(db, auth_user, auth_user.account_id)
+    return db_account
 
 
 # CreateSuperadmin just for Debugging

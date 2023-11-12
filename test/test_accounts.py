@@ -113,3 +113,11 @@ def test_delete_account(superadmin_token):
         }
         assert len(remaining_account_ids) == len(account_ids)
         assert account_id not in remaining_account_ids
+
+
+def test_me_endpoint(regular_token):
+    resp = client.get(
+        "http://localhost:8000/me", headers=auth_header(regular_token)
+    ).json()
+    print(resp)
+    assert resp["account_category"] == "regular"

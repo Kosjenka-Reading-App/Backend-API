@@ -108,3 +108,8 @@ class AuthSchema(BaseModel):
 
 class RefreshSchema(BaseModel):
     refresh_token: str
+
+
+class MeSchema(BaseModel):
+    account_id: int
+    account_category: str
