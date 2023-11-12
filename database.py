@@ -1,13 +1,26 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+import os
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./db.sqlite"
-# SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+
+SQLALCHEMY_DATABASE_URL = os.environ["DATABASE_URL"]
+
+if SQLALCHEMY_DATABASE_URL is None:
+    raise ValueError("DATABASE_URL not provided in .env")
+
+if "sqlite" in SQLALCHEMY_DATABASE_URL:
+    connect_args = {"check_same_thread": False}
+else:
+    connect_args = {}
 
 engine = create_engine(
-    # check_same_thread needed only for sqlite
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False} 
+    SQLALCHEMY_DATABASE_URL,
+    connect_args=connect_args,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
