@@ -9,6 +9,7 @@ exercise_order_by_column = {
     schemas.ExerciseOrderBy.category: models.Exercise.category,
     schemas.ExerciseOrderBy.complexity: models.Exercise.complexity,
     schemas.ExerciseOrderBy.title: models.Exercise.title,
+    schemas.ExerciseOrderBy.date: models.Exercise.date,
 }
 
 
