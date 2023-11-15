@@ -45,7 +45,7 @@ def test_create_exercise_without_complexity(admin_token):
         assert created_exercise[key] == new_exercise[key]
     assert created_exercise["complexity"] == None
     exercises = client.get(
-        "http://localhost:8000/exercises", headers=auth_header(admin_token)
+        "http://localhost:8000/exercises/", headers=auth_header(admin_token)
     ).json()
     assert len(exercises) == exercise_count + 1
 
@@ -59,7 +59,7 @@ def test_get_exercises(admin_token):
 
 def test_get_exercise(admin_token):
     exercises = client.get(
-        "http://localhost:8000/exercises", headers=auth_header(admin_token)
+        "http://localhost:8000/exercises/", headers=auth_header(admin_token)
     ).json()
     exercise_id = exercises[0]["id"]
     exercise = client.get(
