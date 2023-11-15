@@ -43,11 +43,10 @@ def validate_access_level(
         )
 
 
-@app.middleware("http")
-async def normalize_path_middleware(request, call_next):
+async def redirect_trailing_slash(request, call_next):
     if request.url.path.endswith("/"):
-        # if the URL ends by "/", redirect to the same URL without "/"
-        return RedirectResponse(request.url.path[:-1], status_code=301)
+        url_without_trailing_slash = str(request.url)[:-1]
+        return RedirectResponse(url=url_without_trailing_slash, status_code=301)
     return await call_next(request)
 
 @app.get("/healthz", status_code=200)
