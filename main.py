@@ -59,6 +59,7 @@ def create_exercise(
 
 @app.get("/exercises/", response_model=list[schemas.ExerciseResponse])
 def read_exercises(
+    user_id: int | None = None,
     skip: int = 0,
     limit: int = 100,
     order_by: schemas.ExerciseOrderBy | None = None,
@@ -90,9 +91,10 @@ def read_exercises(
 @app.get("/exercises/{exercise_id}", response_model=schemas.FullExerciseResponse)
 def read_exercise(
     exercise_id: int,
+    user_id: int | None = None,
     db: Session = Depends(get_db),
 ):
-    db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
+    db_exercise = crud.get_exercise(db, exercise_id=exercise_id, user_id=user_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
     return db_exercise
@@ -127,6 +129,24 @@ def update_exercise(
         db, exercise_id=exercise_id, exercise=exercise
     )
     return updated_exercise
+
+
+@app.post("/exercises/{exercise_id}/track_completion")
+def track_exercise_completion(
+    exercise_id: int,
+    completion: schemas.ExerciseCompletion,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    validate_access_level(auth_user, models.AccountType.Regular)
+    db_user = crud.get_user(db, completion.user_id)
+    if db_user is None or db_user.id_account != auth_user.account_id:
+        raise HTTPException(status_code=404, detail=f"user with id {completion.user_id} not found for this account")
+    db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
+    if db_exercise is None:
+        raise HTTPException(status_code=404, detail="exercise not found")
+    db_do_exercise = crud.update_exercise_completion(db, db_user, db_exercise, completion)
+    return db_do_exercise
 
 
 @app.post("/accounts/", response_model=schemas.AccountOut)
@@ -341,6 +361,8 @@ def me(
 ):
     validate_access_level(auth_user, models.AccountType.Regular)
     db_account = crud.get_account(db, auth_user, auth_user.account_id)
+    if db_account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
     return db_account
 
 

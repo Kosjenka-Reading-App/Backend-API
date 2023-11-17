@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 from conftest import client
-from utils import auth_header
+from utils import auth_header, good_request
 
 
 def test_create_exercise(admin_token):
@@ -54,7 +54,7 @@ def test_get_exercises(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises", headers=auth_header(admin_token)
     ).json()
-    assert set(exercises[0].keys()) == {"id", "title", "complexity", "category", "date"}
+    assert set(exercises[0].keys()) == {"id", "title", "complexity", "category", "date", "completion"}
 
 
 def test_get_exercise(admin_token):
@@ -73,6 +73,7 @@ def test_get_exercise(admin_token):
         "complexity",
         "text",
         "date",
+        "completion",
     }
 
 
@@ -133,6 +134,37 @@ def test_search_exercises(admin_token):
     ).json()
     for exercise in exercises:
         assert exercise["title"] == "Title of another exercise"
+
+
+def test_track_exercise_completion():
+    new_account = {
+        "email": "user1@gmail.com",
+        "password": "secret",
+    }
+    client.post("http://localhost:8000/register", json=new_account)
+    # good_request(client.post, "http://localhost:8000/register", json=new_account)
+    login_resp = good_request(client.post, "http://localhost:8000/login", json=new_account)
+    auth_header={"Authorization": f"Bearer {login_resp['access_token']}"}
+    new_user = {
+        "username": f"userToTrack",
+        "profficiency": 0
+    }
+    user_resp = good_request(client.post, "http://localhost:8000/users", json=new_user, headers=auth_header)
+    created_user_id = user_resp['id_user']
+
+    exercise_completion = {
+        "user_id": created_user_id,
+        "completion": 45,
+    }
+    good_request(client.post, "http://localhost:8000/exercises/1/track_completion", json=exercise_completion, headers=auth_header)
+    exercise_resp = good_request(client.get, "http://localhost:8000/exercises/1?user_id=45", headers=auth_header)
+    print(exercise_resp)
+    assert exercise_resp.completion == 45
+
+    me_resp = good_request(client.get, "http://localhost:8000/me", headers=auth_header)
+    good_request(client.delete, f"http://localhost:8000/accounts/{me_resp['id_account']}", headers=auth_header)
+    good_request(client.delete, f"http://localhost:8000/users/{created_user_id}", headers=auth_header)
+    assert True
 
 
 def test_delete_exercise(admin_token):
@@ -275,3 +307,4 @@ def test_update_exercise_modifies_date(admin_token):
     date_obj2 = datetime.fromisoformat(updated_exercise["date"])
     assert date_obj1 < date_obj2
     test_delete_exercise(admin_token)
+

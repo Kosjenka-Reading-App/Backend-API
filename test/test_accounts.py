@@ -1,5 +1,5 @@
 from conftest import client
-from utils import auth_header
+from utils import auth_header, good_request, bad_request
 
 
 def test_create_account(superadmin_token):
@@ -121,3 +121,16 @@ def test_me_endpoint(regular_token):
     ).json()
     print(resp)
     assert resp["account_category"] == "regular"
+
+
+def test_me_for_deleted_account():
+    new_account = {
+        "email": "toBeDeleted@gmail.com",
+        "password": "secret",
+    }
+    good_request(client.post, "http://localhost:8000/register", json=new_account)
+    login_resp = good_request(client.post, "http://localhost:8000/login", json=new_account)
+    auth_header={"Authorization": f"Bearer {login_resp['access_token']}"}
+    me_resp = good_request(client.get, "http://localhost:8000/me", headers=auth_header)
+    good_request(client.delete, f"http://localhost:8000/accounts/{me_resp['id_account']}", headers=auth_header)
+    bad_request(client.get, 404, "http://localhost:8000/me", headers=auth_header)
