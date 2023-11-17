@@ -40,8 +40,10 @@ exercise_category = Table(
 
 
 class DoExercise(Base):
-    __tablename__ = "association_table"
-    exercise_id: Mapped[int] = mapped_column(ForeignKey("exercise.id"), primary_key=True)
+    __tablename__ = "do_exercise"
+    exercise_id: Mapped[int] = mapped_column(
+        ForeignKey("exercise.id"), primary_key=True
+    )
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id_user"), primary_key=True)
     user: Mapped["User"] = relationship(back_populates="exercises")
     exercise: Mapped["Exercise"] = relationship(back_populates="users")
@@ -66,7 +68,9 @@ class Exercise(Base):
     category = relationship(
         "Category", secondary=exercise_category, back_populates="exercises"
     )
-    users: Mapped[List["DoExercise"]] = relationship(back_populates="exercise")
+    users: Mapped[List["DoExercise"]] = relationship(
+        back_populates="exercise", lazy="dynamic"
+    )
     date = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
@@ -86,7 +90,9 @@ class User(Base):
     id_account = Column(Integer)
     username = Column(String)
     proficiency = Column(Float)
-    exercises: Mapped[List["DoExercise"]] = relationship(back_populates="user")
+    exercises: Mapped[List["DoExercise"]] = relationship(
+        back_populates="user", lazy="dynamic"
+    )
 
 
 class Category(Base):

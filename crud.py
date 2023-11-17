@@ -20,14 +20,24 @@ account_order_by_column = {
 
 
 def get_exercise(db: Session, exercise_id: int, user_id: int | None = None):
-    db_exercise = db.query(models.Exercise).filter(models.Exercise.id == exercise_id)
-    if db_exercise and user_id:
-        print(user_id)
-        db_exercise_with_completion = db_exercise.join(models.DoExercise).join(models.User)
-        return db_exercise_with_completion.first()
-        # if db_exercise_with_completion:
-        #     return db_exercise_with_completion.first()
-    return db_exercise.first()
+    if user_id:
+        db_exercise = (
+            db.query(models.DoExercise)
+            .select_from(models.Exercise)
+            .join(models.Exercise.users)
+            .filter(models.Exercise.id == exercise_id)
+            .filter(models.DoExercise.user_id == user_id)
+            .add_entity(models.Exercise)
+            .first()
+        )
+        if db_exercise:
+            exercise_completion = schemas.ExerciseCompletion.model_validate(
+                db_exercise[0]
+            )
+            exercise = schemas.FullExerciseResponse.model_validate(db_exercise[1])
+            exercise.completion = exercise_completion
+            return exercise
+    return db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
 
 
 def get_exercises(
@@ -77,7 +87,9 @@ def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
 
 
 def delete_exercise(db: Session, exercise_id: int):
-    db.query(models.DoExercise).filter(models.DoExercise.exercise_id == exercise_id).delete()
+    db.query(models.DoExercise).filter(
+        models.DoExercise.exercise_id == exercise_id
+    ).delete()
     db.delete(
         db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
     )
@@ -99,15 +111,25 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     return stored_exercise
 
 
-def update_exercise_completion(db: Session, db_user: models.User, db_exercise: models.Exercise, completion: schemas.ExerciseCompletion):
-    db_do_exercise = db.query(models.DoExercise).filter(models.DoExercise.exercise_id == db_exercise.id).filter(models.DoExercise.user_id == db_user.id_user).first()
+def update_exercise_completion(
+    db: Session,
+    db_user: models.User,
+    db_exercise: models.Exercise,
+    completion: schemas.ExerciseCompletion,
+):
+    db_do_exercise = (
+        db.query(models.DoExercise)
+        .filter(models.DoExercise.exercise_id == db_exercise.id)
+        .filter(models.DoExercise.user_id == db_user.id_user)
+        .first()
+    )
     if db_do_exercise is None:
         db_do_exercise = models.DoExercise()
         db.add(db_do_exercise)
         db_user.exercises.append(db_do_exercise)
         db_do_exercise.exercise = db_exercise
     update_data = completion.model_dump(exclude_unset=True)
-    update_data.pop('user_id')
+    update_data.pop("user_id")
     for key in update_data:
         setattr(db_do_exercise, key, update_data[key])
     db.commit()

@@ -7,6 +7,9 @@ from datetime import datetime
 import models
 
 
+BaseModel.model_config = {"from_attributes": True}
+
+
 class ExerciseOrderBy(Enum):
     category = "category"
     complexity = "complexity"
@@ -33,11 +36,18 @@ class Category(BaseModel):
     category: str
 
 
+class ExerciseCompletion(BaseModel):
+    user_id: int
+    completion: Optional[int] = None
+    position: Optional[int] = None
+    time_spent: Optional[int] = None
+
+
 class ExerciseResponse(BaseModel):
     id: int
     title: str
     complexity: models.Complexity | None
-    completion: int | None = None
+    completion: ExerciseCompletion | None = None
     category: List[Category]
     date: datetime
 
@@ -54,13 +64,6 @@ class ExercisePatch(BaseModel):
     text: Optional[str] = None
     complexity: Optional[models.Complexity] = None
     category: Optional[List[str]] = []
-
-
-class ExerciseCompletion(BaseModel):
-    user_id: int
-    completion: Optional[int] = None
-    position: Optional[int] = None
-    time_spent: Optional[int] = None
 
 
 class FullExerciseResponse(ExerciseResponse):

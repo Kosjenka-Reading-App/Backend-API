@@ -129,8 +129,14 @@ def test_me_for_deleted_account():
         "password": "secret",
     }
     good_request(client.post, "http://localhost:8000/register", json=new_account)
-    login_resp = good_request(client.post, "http://localhost:8000/login", json=new_account)
-    auth_header={"Authorization": f"Bearer {login_resp['access_token']}"}
+    login_resp = good_request(
+        client.post, "http://localhost:8000/login", json=new_account
+    )
+    auth_header = {"Authorization": f"Bearer {login_resp['access_token']}"}
     me_resp = good_request(client.get, "http://localhost:8000/me", headers=auth_header)
-    good_request(client.delete, f"http://localhost:8000/accounts/{me_resp['id_account']}", headers=auth_header)
+    good_request(
+        client.delete,
+        f"http://localhost:8000/accounts/{me_resp['id_account']}",
+        headers=auth_header,
+    )
     bad_request(client.get, 404, "http://localhost:8000/me", headers=auth_header)

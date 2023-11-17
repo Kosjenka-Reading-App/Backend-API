@@ -94,9 +94,21 @@ def read_exercise(
     user_id: int | None = None,
     db: Session = Depends(get_db),
 ):
-    db_exercise = crud.get_exercise(db, exercise_id=exercise_id, user_id=user_id)
+    db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
+    resp = schemas.FullExerciseResponse
+    print(db_exercise.id)
+    resp.id = db_exercise.id
+    resp.title = db_exercise.title
+    resp.complexity = db_exercise.complexity
+    resp.category = db_exercise.category
+    resp.date = db_exercise.date
+    do_exercise = db_exercise.users.filter(lambda u: u.id_user == user_id).first()
+    if do_exercise:
+        resp.completion = do_exercise.completion
+        resp.position = do_exercise.position
+        resp.time_spent = do_exercise.time_spent
     return db_exercise
 
 
@@ -141,11 +153,16 @@ def track_exercise_completion(
     validate_access_level(auth_user, models.AccountType.Regular)
     db_user = crud.get_user(db, completion.user_id)
     if db_user is None or db_user.id_account != auth_user.account_id:
-        raise HTTPException(status_code=404, detail=f"user with id {completion.user_id} not found for this account")
+        raise HTTPException(
+            status_code=404,
+            detail=f"user with id {completion.user_id} not found for this account",
+        )
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
-    db_do_exercise = crud.update_exercise_completion(db, db_user, db_exercise, completion)
+    db_do_exercise = crud.update_exercise_completion(
+        db, db_user, db_exercise, completion
+    )
     return db_do_exercise
 
 
