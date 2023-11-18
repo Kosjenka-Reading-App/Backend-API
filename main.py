@@ -59,7 +59,7 @@ def validate_user_belongs_to_account(
             detail=f"user with id {user_id} not found for this account",
         )
 
-        
+
 async def redirect_trailing_slash(request, call_next):
     if request.url.path.endswith("/"):
         url_without_trailing_slash = str(request.url)[:-1]
