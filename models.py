@@ -65,9 +65,7 @@ class Exercise(Base):
     category = relationship(
         "Category", secondary=exercise_category, back_populates="exercises"
     )
-    users = relationship("DoExercise",
-        back_populates="exercise", lazy="dynamic"
-    )
+    users = relationship("DoExercise", back_populates="exercise", lazy="dynamic")
     date = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
@@ -87,9 +85,7 @@ class User(Base):
     id_account = Column(Integer)
     username = Column(String)
     proficiency = Column(Float)
-    exercises = relationship("DoExercise",
-        back_populates="user", lazy="dynamic"
-    )
+    exercises = relationship("DoExercise", back_populates="user", lazy="dynamic")
 
 
 class Category(Base):
