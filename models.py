@@ -1,3 +1,4 @@
+from typing import Optional, List
 import enum
 
 from sqlalchemy import (
@@ -11,7 +12,7 @@ from sqlalchemy import (
     DateTime,
     func,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from database import Base
 
@@ -37,6 +38,17 @@ exercise_category = Table(
 )
 
 
+class DoExercise(Base):
+    __tablename__ = "do_exercise"
+    exercise_id = Column(Integer, ForeignKey("exercise.id"), primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id_user"), primary_key=True)
+    user = relationship("User", back_populates="exercises")
+    exercise = relationship("Exercise", back_populates="users")
+    completion = Column(Integer, nullable=True)
+    position = Column(Integer, nullable=True)
+    time_spent = Column(Integer, nullable=True)
+
+
 class Complexity(enum.Enum):
     _easy = "easy"
     _medium = "medium"
@@ -53,6 +65,7 @@ class Exercise(Base):
     category = relationship(
         "Category", secondary=exercise_category, back_populates="exercises"
     )
+    users = relationship("DoExercise", back_populates="exercise", lazy="dynamic")
     date = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
@@ -72,6 +85,7 @@ class User(Base):
     id_account = Column(Integer)
     username = Column(String)
     proficiency = Column(Float)
+    exercises = relationship("DoExercise", back_populates="user", lazy="dynamic")
 
 
 class Category(Base):

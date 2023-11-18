@@ -1,7 +1,6 @@
 import pytest
 
-from conftest import client
-from utils import auth_header
+from conftest import client, auth_header
 
 
 @pytest.mark.parametrize("category_name", ["Dogs", "Cats"])

@@ -1,7 +1,6 @@
 from datetime import datetime
 import time
-from conftest import client
-from utils import auth_header
+from conftest import client, auth_header
 
 
 def test_create_exercise(admin_token):
@@ -54,7 +53,14 @@ def test_get_exercises(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises", headers=auth_header(admin_token)
     ).json()
-    assert set(exercises[0].keys()) == {"id", "title", "complexity", "category", "date"}
+    assert set(exercises[0].keys()) == {
+        "id",
+        "title",
+        "complexity",
+        "category",
+        "date",
+        "completion",
+    }
 
 
 def test_get_exercise(admin_token):
@@ -73,6 +79,7 @@ def test_get_exercise(admin_token):
         "complexity",
         "text",
         "date",
+        "completion",
     }
 
 

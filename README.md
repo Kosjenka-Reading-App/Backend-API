@@ -31,6 +31,11 @@ Launch tests from the root directory with
 python3 -m pytest
 ```
 
+To experiment with the ORM, run:
+```
+ipython3 -i test/sqlalchemy_console.py
+```
+
 
 # Sources
 

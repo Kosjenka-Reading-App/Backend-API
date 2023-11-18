@@ -19,7 +19,24 @@ account_order_by_column = {
 }
 
 
-def get_exercise(db: Session, exercise_id: int):
+def get_exercise(db: Session, exercise_id: int, user_id: int | None = None):
+    if user_id:
+        db_exercise = (
+            db.query(models.DoExercise)
+            .select_from(models.Exercise)
+            .join(models.Exercise.users)
+            .filter(models.Exercise.id == exercise_id)
+            .filter(models.DoExercise.user_id == user_id)
+            .add_entity(models.Exercise)
+            .first()
+        )
+        if db_exercise:
+            exercise_completion = schemas.ExerciseCompletion.model_validate(
+                db_exercise[0]
+            )
+            exercise = schemas.FullExerciseResponse.model_validate(db_exercise[1])
+            exercise.completion = exercise_completion
+            return exercise
     return db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
 
 
@@ -32,6 +49,7 @@ def get_exercises(
     complexity: models.Complexity | None = None,
     category: models.Category | None = None,
     title_like: str | None = None,
+    user_id: int | None = None,
 ):
     exercises = db.query(models.Exercise)
     if complexity:
@@ -40,13 +58,29 @@ def get_exercises(
         exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+    if user_id:
+        exercises = (
+            exercises.join(models.DoExercise, isouter=True)
+            .add_entity(models.DoExercise)
+            .filter(or_(models.DoExercise.user_id == 1, models.Exercise.users == None))
+        )
     if order_by:
         exercises = exercises.order_by(
             exercise_order_by_column[order_by].desc()
             if order == schemas.Order.desc
             else exercise_order_by_column[order_by]
         )
-    return exercises.offset(skip).limit(limit).all()
+    paginated_exercises = exercises.offset(skip).limit(limit)
+    if user_id:
+        exercises = []
+        for ex, do_ex in paginated_exercises:
+            if do_ex:
+                ex_completion = schemas.ExerciseCompletion.model_validate(do_ex)
+                ex = schemas.FullExerciseResponse.model_validate(ex)
+                ex.completion = ex_completion
+            exercises.append(ex)
+        return exercises
+    return paginated_exercises.all()
 
 
 def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
@@ -68,6 +102,9 @@ def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
 
 
 def delete_exercise(db: Session, exercise_id: int):
+    db.query(models.DoExercise).filter(
+        models.DoExercise.exercise_id == exercise_id
+    ).delete()
     db.delete(
         db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
     )
@@ -87,6 +124,32 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     db.commit()
     db.refresh(stored_exercise)
     return stored_exercise
+
+
+def update_exercise_completion(
+    db: Session,
+    db_user: models.User,
+    db_exercise: models.Exercise,
+    completion: schemas.ExerciseCompletion,
+):
+    db_do_exercise = (
+        db.query(models.DoExercise)
+        .filter(models.DoExercise.exercise_id == db_exercise.id)
+        .filter(models.DoExercise.user_id == db_user.id_user)
+        .first()
+    )
+    if db_do_exercise is None:
+        db_do_exercise = models.DoExercise()
+        db.add(db_do_exercise)
+        db_user.exercises.append(db_do_exercise)
+        db_do_exercise.exercise = db_exercise
+    update_data = completion.model_dump(exclude_unset=True)
+    update_data.pop("user_id")
+    for key in update_data:
+        setattr(db_do_exercise, key, update_data[key])
+    db.commit()
+    db.refresh(db_do_exercise)
+    return db_do_exercise
 
 
 # Accounts
@@ -205,6 +268,7 @@ def update_user(db: Session, user_id: int, user: schemas.UserPatch):
 
 
 def delete_user(db: Session, user_id: int):
+    db.query(models.DoExercise).filter(models.DoExercise.user_id == user_id).delete()
     db.delete(db.query(models.User).filter(models.User.id_user == user_id).first())
     db.commit()
 

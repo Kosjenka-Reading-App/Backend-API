@@ -20,6 +20,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+optional_auth = JWTBearer(auto_error=False)
 
 
 # Dependency
@@ -40,6 +41,22 @@ def validate_access_level(
         raise HTTPException(
             status_code=401,
             detail=f"Permission only for {[lvl for lvl in models.ACCESS_LEVELS if models.ACCESS_LEVELS[lvl] > user_level]}",
+        )
+
+
+def validate_user_belongs_to_account(
+    user_id: int,
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+    db: Session = Depends(get_db),
+):
+    db_user = crud.get_user(db, user_id)
+    if (
+        db_user is None
+        or schemas.UserSchema.model_validate(db_user).id_account != auth_user.account_id
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail=f"user with id {user_id} not found for this account",
         )
 
 
@@ -74,8 +91,18 @@ def read_exercises(
     complexity: models.Complexity | None = None,
     category: str | None = None,
     title_like: str | None = None,
+    user_id: int | None = None,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema | None = Depends(optional_auth),
 ):
+    print(auth_user)
+    if user_id:
+        if not auth_user:
+            raise HTTPException(
+                status_code=403, detail="account must be authorized to access user data"
+            )
+        validate_access_level(auth_user, models.AccountType.Regular)
+        validate_user_belongs_to_account(user_id, auth_user, db)
     if category:
         db_category = crud.get_category(db, category)
         if db_category is None:
@@ -91,6 +118,7 @@ def read_exercises(
         complexity=complexity,
         category=db_category,
         title_like=title_like,
+        user_id=user_id,
     )
     return exercises
 
@@ -98,9 +126,18 @@ def read_exercises(
 @app.get("/exercises/{exercise_id}", response_model=schemas.FullExerciseResponse)
 def read_exercise(
     exercise_id: int,
+    user_id: int | None = None,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema | None = Depends(optional_auth),
 ):
-    db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
+    if user_id:
+        if not auth_user:
+            raise HTTPException(
+                status_code=403, detail="account must be authorized to access user data"
+            )
+        validate_access_level(auth_user, models.AccountType.Regular)
+        validate_user_belongs_to_account(user_id, auth_user, db)
+    db_exercise = crud.get_exercise(db, exercise_id=exercise_id, user_id=user_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
     return db_exercise
@@ -135,6 +172,25 @@ def update_exercise(
         db, exercise_id=exercise_id, exercise=exercise
     )
     return updated_exercise
+
+
+@app.post("/exercises/{exercise_id}/track_completion")
+def track_exercise_completion(
+    exercise_id: int,
+    completion: schemas.ExerciseCompletion,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    validate_access_level(auth_user, models.AccountType.Regular)
+    validate_user_belongs_to_account(completion.user_id, auth_user, db)
+    db_user = crud.get_user(db, completion.user_id)
+    db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
+    if db_exercise is None:
+        raise HTTPException(status_code=404, detail="exercise not found")
+    db_do_exercise = crud.update_exercise_completion(
+        db, db_user, db_exercise, completion
+    )
+    return db_do_exercise
 
 
 @app.post("/accounts", response_model=schemas.AccountOut)
@@ -349,6 +405,8 @@ def me(
 ):
     validate_access_level(auth_user, models.AccountType.Regular)
     db_account = crud.get_account(db, auth_user, auth_user.account_id)
+    if db_account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
     return db_account
 
 
