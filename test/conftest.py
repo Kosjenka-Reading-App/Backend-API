@@ -60,14 +60,13 @@ def create_account():
             "password": "secret",
         }
         id_counter += 1
-        account_resp = good_request(
+        id_account = good_request(
             client.post, "http://localhost:8000/register", json=new_account
-        )
-        account_resp = good_request(
+        )["id_account"]
+        access_token = good_request(
             client.post, "http://localhost:8000/login", json=new_account
-        )
-        access_token = account_resp["access_token"]
-        accounts.append((account_resp["id_account"], access_token))
+        )["access_token"]
+        accounts.append((id_account, access_token))
         return access_token
 
     yield new_account
@@ -146,11 +145,11 @@ def auth_header(token: str):
 
 def good_request(request_function, *args, **kwargs):
     resp = request_function(*args, **kwargs)
-    assert resp.status_code == 200
+    assert resp.status_code == 200, resp.json()
     return resp.json()
 
 
 def bad_request(request_function, status_code, *args, **kwargs):
     resp = request_function(*args, **kwargs)
-    assert resp.status_code == status_code
+    assert resp.status_code == status_code, resp.json()
     return resp.json()

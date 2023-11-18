@@ -1,4 +1,4 @@
-from conftest import client, auth_header, good_request
+from conftest import client, auth_header, good_request, bad_request
 
 
 def test_track_exercise_completion_metrics(regular_token, create_user, create_exercise):
@@ -122,7 +122,9 @@ def test_read_all_exercises_with_completion(
     exercises = [
         ex
         for ex in good_request(
-            client.get, f"http://localhost:8000/exercises?user_id={id_alice}"
+            client.get,
+            f"http://localhost:8000/exercises?user_id={id_alice}",
+            headers=auth_header(regular_token),
         )
         if ex["id"] in created_exercises.keys()
     ]
@@ -131,3 +133,15 @@ def test_read_all_exercises_with_completion(
             assert ex["completion"] is None
         else:
             assert ex["completion"]["completion"] == created_exercises[ex["id"]]
+
+
+def test_read_exercises_of_other_account_user(create_account, create_exercise):
+    access_token = create_account()
+    ex_id = create_exercise()["id"]
+    bad_request(client.get, 403, f"http://localhost:8000/exercises/{ex_id}?user_id=2")
+    bad_request(
+        client.get,
+        404,
+        f"http://localhost:8000/exercises/{ex_id}?user_id=2",
+        headers=auth_header(access_token),
+    )
