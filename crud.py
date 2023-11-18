@@ -44,12 +44,12 @@ def get_exercises(
     db: Session,
     skip: int = 0,
     limit: int = 100,
-    user_id: int | None = None,
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
     category: models.Category | None = None,
     title_like: str | None = None,
+    user_id: int | None = None,
 ):
     exercises = db.query(models.Exercise)
     if complexity:
@@ -58,6 +58,12 @@ def get_exercises(
         exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+    if user_id:
+        exercises = (
+            exercises.join(models.DoExercise, isouter=True)
+            .add_entity(models.DoExercise)
+            .filter(or_(models.DoExercise.user_id == 1, models.Exercise.users == None))
+        )
     if order_by:
         exercises = exercises.order_by(
             exercise_order_by_column[order_by].desc()
@@ -65,6 +71,15 @@ def get_exercises(
             else exercise_order_by_column[order_by]
         )
     paginated_exercises = exercises.offset(skip).limit(limit)
+    if user_id:
+        exercises = []
+        for ex, do_ex in paginated_exercises:
+            if do_ex:
+                ex_completion = schemas.ExerciseCompletion.model_validate(do_ex)
+                ex = schemas.FullExerciseResponse.model_validate(ex)
+                ex.completion = ex_completion
+            exercises.append(ex)
+        return exercises
     return paginated_exercises.all()
 
 

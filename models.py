@@ -3,7 +3,6 @@ import enum
 
 from sqlalchemy import (
     Column,
-    Double,
     Integer,
     String,
     Float,

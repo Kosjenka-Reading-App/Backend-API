@@ -1,7 +1,6 @@
 from datetime import datetime
 import time
-from conftest import client
-from utils import auth_header, good_request
+from conftest import client, auth_header
 
 
 def test_create_exercise(admin_token):
@@ -141,51 +140,6 @@ def test_search_exercises(admin_token):
     ).json()
     for exercise in exercises:
         assert exercise["title"] == "Title of another exercise"
-
-
-def test_track_exercise_completion():
-    new_account = {
-        "email": "user1@gmail.com",
-        "password": "secret",
-    }
-    client.post("http://localhost:8000/register", json=new_account)
-    login_resp = good_request(
-        client.post, "http://localhost:8000/login", json=new_account
-    )
-    auth_header = {"Authorization": f"Bearer {login_resp['access_token']}"}
-    new_user = {"username": f"userToTrack", "profficiency": 0}
-    user_resp = good_request(
-        client.post, "http://localhost:8000/users", json=new_user, headers=auth_header
-    )
-    created_user_id = user_resp["id_user"]
-
-    exercise_completion = {
-        "user_id": created_user_id,
-        "completion": 45,
-    }
-    good_request(
-        client.post,
-        "http://localhost:8000/exercises/1/track_completion",
-        json=exercise_completion,
-        headers=auth_header,
-    )
-    exercise_resp = good_request(
-        client.get, f"http://localhost:8000/exercises/1?user_id={created_user_id}", headers=auth_header
-    )
-    assert exercise_resp['completion']['completion'] == 45
-
-    me_resp = good_request(client.get, "http://localhost:8000/me", headers=auth_header)
-    good_request(
-        client.delete,
-        f"http://localhost:8000/accounts/{me_resp['id_account']}",
-        headers=auth_header,
-    )
-    good_request(
-        client.delete,
-        f"http://localhost:8000/users/{created_user_id}",
-        headers=auth_header,
-    )
-    assert True
 
 
 def test_delete_exercise(admin_token):

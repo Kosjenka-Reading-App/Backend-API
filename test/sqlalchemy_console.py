@@ -18,8 +18,6 @@ db = SessionLocal()
 
 
 # NOTES ON WORK IN PROGRESS
-
-
 db_exercise = (
     db.query(models.DoExercise)
     .select_from(models.Exercise)

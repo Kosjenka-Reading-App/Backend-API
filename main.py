@@ -59,7 +59,6 @@ def create_exercise(
 
 @app.get("/exercises/", response_model=list[schemas.ExerciseResponse])
 def read_exercises(
-    user_id: int | None = None,
     skip: int = 0,
     limit: int = 100,
     order_by: schemas.ExerciseOrderBy | None = None,
@@ -67,6 +66,7 @@ def read_exercises(
     complexity: models.Complexity | None = None,
     category: str | None = None,
     title_like: str | None = None,
+    user_id: int | None = None,
     db: Session = Depends(get_db),
 ):
     if category:
@@ -84,6 +84,7 @@ def read_exercises(
         complexity=complexity,
         category=db_category,
         title_like=title_like,
+        user_id=user_id,
     )
     return exercises
 

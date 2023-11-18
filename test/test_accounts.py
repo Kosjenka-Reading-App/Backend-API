@@ -1,5 +1,4 @@
-from conftest import client
-from utils import auth_header, good_request, bad_request
+from conftest import client, auth_header, good_request, bad_request
 
 
 def test_create_account(superadmin_token):
