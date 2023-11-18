@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 import crud
 import models
@@ -58,13 +59,20 @@ def validate_user_belongs_to_account(
             detail=f"user with id {user_id} not found for this account",
         )
 
+        
+async def redirect_trailing_slash(request, call_next):
+    if request.url.path.endswith("/"):
+        url_without_trailing_slash = str(request.url)[:-1]
+        return RedirectResponse(url=url_without_trailing_slash, status_code=301)
+    return await call_next(request)
+
 
 @app.get("/healthz", status_code=200)
 def health_check():
     return {"status": "ok"}
 
 
-@app.post("/exercises/", response_model=schemas.FullExerciseResponse)
+@app.post("/exercises", response_model=schemas.FullExerciseResponse)
 def create_exercise(
     exercise: schemas.ExerciseCreate,
     db: Session = Depends(get_db),
@@ -74,7 +82,7 @@ def create_exercise(
     return crud.create_exercise(db=db, exercise=exercise)
 
 
-@app.get("/exercises/", response_model=list[schemas.ExerciseResponse])
+@app.get("/exercises", response_model=list[schemas.ExerciseResponse])
 def read_exercises(
     skip: int = 0,
     limit: int = 100,
@@ -185,7 +193,7 @@ def track_exercise_completion(
     return db_do_exercise
 
 
-@app.post("/accounts/", response_model=schemas.AccountOut)
+@app.post("/accounts", response_model=schemas.AccountOut)
 def create_account(
     account_in: schemas.AccountIn,
     db: Session = Depends(get_db),
@@ -198,7 +206,7 @@ def create_account(
     return account_saved
 
 
-@app.post("/register/", response_model=schemas.AccountOut)
+@app.post("/register", response_model=schemas.AccountOut)
 def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db)):
     if crud.email_is_registered(db, account_in.email):
         raise HTTPException(status_code=409, detail="Email already registered")
@@ -206,7 +214,7 @@ def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db
     return account_saved
 
 
-@app.get("/accounts/", response_model=list[schemas.AccountOut])
+@app.get("/accounts", response_model=list[schemas.AccountOut])
 def get_all_accounts(
     skip: int = 0,
     limit: int = 100,
@@ -268,7 +276,7 @@ def update_account(
 
 
 # User
-@app.get("/users/", response_model=list[schemas.UserSchema])
+@app.get("/users", response_model=list[schemas.UserSchema])
 def read_all_users(
     skip: int = 0,
     limit: int = 100,
@@ -315,7 +323,7 @@ def delete_user(
     return {"ok": True}
 
 
-@app.post("/users/", response_model=schemas.UserSchema)
+@app.post("/users", response_model=schemas.UserSchema)
 def create_user(
     user: schemas.UserCreate,
     db: Session = Depends(get_db),
@@ -332,7 +340,7 @@ def create_category(category: str, db: Session = Depends(get_db)):
     return crud.create_category(db=db, category=category)
 
 
-@app.get("/categories/", response_model=list[str])
+@app.get("/categories", response_model=list[str])
 def read_categories(
     skip: int = 0,
     limit: int = 100,
@@ -403,7 +411,7 @@ def me(
 
 
 # CreateSuperadmin just for Debugging
-@app.post("/createsuperadmin/", response_model=schemas.AccountOut)
+@app.post("/createsuperadmin", response_model=schemas.AccountOut)
 def createsuperadmin_only_for_debugging(
     account_in: schemas.AccountIn, db: Session = Depends(get_db)
 ):

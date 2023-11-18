@@ -106,7 +106,7 @@ def test_update_exercise_with_category(admin_token):
 
 
 def test_rename_category(admin_token):
-    categories = client.get("http://localhost:8000/categories").json()
+    categories = client.get("http://localhost:8000/categories/").json()
     assert set(categories) == {"cats", "dogs", "mice"}
     body = {"category": "one mouse"}
     updated_category = client.patch(
