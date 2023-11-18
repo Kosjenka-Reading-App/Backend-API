@@ -94,21 +94,9 @@ def read_exercise(
     user_id: int | None = None,
     db: Session = Depends(get_db),
 ):
-    db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
+    db_exercise = crud.get_exercise(db, exercise_id=exercise_id, user_id=user_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
-    resp = schemas.FullExerciseResponse
-    print(db_exercise.id)
-    resp.id = db_exercise.id
-    resp.title = db_exercise.title
-    resp.complexity = db_exercise.complexity
-    resp.category = db_exercise.category
-    resp.date = db_exercise.date
-    do_exercise = db_exercise.users.filter(lambda u: u.id_user == user_id).first()
-    if do_exercise:
-        resp.completion = do_exercise.completion
-        resp.position = do_exercise.position
-        resp.time_spent = do_exercise.time_spent
     return db_exercise
 
 

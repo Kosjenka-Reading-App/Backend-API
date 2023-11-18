@@ -149,7 +149,6 @@ def test_track_exercise_completion():
         "password": "secret",
     }
     client.post("http://localhost:8000/register", json=new_account)
-    # good_request(client.post, "http://localhost:8000/register", json=new_account)
     login_resp = good_request(
         client.post, "http://localhost:8000/login", json=new_account
     )
@@ -171,10 +170,9 @@ def test_track_exercise_completion():
         headers=auth_header,
     )
     exercise_resp = good_request(
-        client.get, "http://localhost:8000/exercises/1?user_id=45", headers=auth_header
+        client.get, f"http://localhost:8000/exercises/1?user_id={created_user_id}", headers=auth_header
     )
-    print(exercise_resp)
-    assert exercise_resp.completion == 45
+    assert exercise_resp['completion']['completion'] == 45
 
     me_resp = good_request(client.get, "http://localhost:8000/me", headers=auth_header)
     good_request(
