@@ -83,7 +83,7 @@ class User(Base):
     __tablename__ = "user"
 
     id_user = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    id_account = Column(Integer, ForeignKey('account.id_account'))
+    id_account = Column(Integer, ForeignKey("account.id_account"))
     username = Column(String)
     proficiency = Column(Float)
     exercises = relationship("DoExercise", back_populates="user", lazy="dynamic")
