@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from fastapi import Request
+from fastapi.responses import HTMLResponse
 
 import crud
 import models
@@ -424,7 +424,11 @@ async def send_password_mail(forget_passwort_input: schemas.ForgetPasswordSchema
             status_code=500, detail=f"An unexpected error occurred"
         )        
     
-    
+@app.get("/reset_password", response_class=HTMLResponse)
+def account_reset_password(request: Request):
+    token = request.query_params.get('token')
+    return templates.TemplateResponse("reset_password.html",{"request": request, "token": token})
+
         
 # CreateSuperadmin just for Debugging
 @app.post("/createsuperadmin", response_model=schemas.AccountOut)
