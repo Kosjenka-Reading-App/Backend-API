@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi import Request
 
 import crud
 import models
@@ -409,7 +410,22 @@ def me(
         raise HTTPException(status_code=404, detail="Account not found")
     return db_account
 
-
+# Password Reset
+@app.post("/forgot_password")
+async def send_password_mail(forget_passwort_input: schemas.ForgetPasswordSchema,request: Request, db: Session = Depends(get_db)):
+    account = auth.get_account_by_email(db=db, email=forget_passwort_input.email)
+    if account is None:           
+        raise HTTPException(status_code=400, detail=f"Email not found")
+    try:
+        await auth.send_password_reset_mail(account=account, base_url=str(request.base_url))
+        return {"result": f"An email has been sent to {account.email} with a link for password reset."}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred"
+        )        
+    
+    
+        
 # CreateSuperadmin just for Debugging
 @app.post("/createsuperadmin", response_model=schemas.AccountOut)
 def createsuperadmin_only_for_debugging(

@@ -124,3 +124,7 @@ class RefreshSchema(BaseModel):
 class MeSchema(BaseModel):
     account_id: int
     account_category: str
+    
+#Forget Password
+class ForgetPasswordSchema(BaseModel):
+    email: EmailStr
