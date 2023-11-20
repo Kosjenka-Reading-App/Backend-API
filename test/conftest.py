@@ -40,6 +40,7 @@ def superadmin_token():
     account_details = {"email": "superadmin@gmail.com", "password": "superadmin"}
     resp = client.post("http://localhost:8000/login", json=account_details).json()
     if "detail" in resp and resp["detail"] == "Username/Password wrong":
+        account_details = {"email": "superadmin@gmail.com", "password": "superadmin", "is_superadmin": True}
         resp = client.post(
             "http://localhost:8000/createsuperadmin", json=account_details
         ).json()

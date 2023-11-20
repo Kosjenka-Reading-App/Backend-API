@@ -74,6 +74,7 @@ class FullExerciseResponse(ExerciseResponse):
 class AccountIn(BaseModel):
     email: EmailStr
     password: str
+    is_superadmin: Optional[bool] = False
 
 
 class AccountOut(BaseModel):
