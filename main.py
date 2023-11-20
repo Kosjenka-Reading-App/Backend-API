@@ -202,7 +202,7 @@ def create_account(
     validate_access_level(auth_user, models.AccountType.Superadmin)
     if crud.email_is_registered(db, account_in.email):
         raise HTTPException(status_code=409, detail="Email already registered")
-    
+
     if account_in.is_superadmin:
         type_account = models.AccountType.Superadmin
     else:

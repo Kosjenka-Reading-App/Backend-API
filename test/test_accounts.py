@@ -6,10 +6,7 @@ def test_create_account(superadmin_token):
         "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
     ).json()
     account_count = len(accounts)
-    new_account = {
-        "email": "email@gmail.com",
-        "password": "secret",
-    }
+    new_account = {"email": "email@gmail.com", "password": "secret"}
     resp = client.post(
         "http://localhost:8000/accounts",
         json=new_account,
