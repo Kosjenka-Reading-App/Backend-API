@@ -80,6 +80,7 @@ class AccountIn(BaseModel):
     email: EmailStr
     password: str
 
+
 class AccountPostAdmin(AccountIn):
     is_superadmin: Optional[bool] = False
 
