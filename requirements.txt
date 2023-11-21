@@ -33,3 +33,4 @@ uuid==1.30
 httpx==0.25.1
 PyJWT==2.6.0
 fastapi-mail==1.4.1
+python-multipart==0.0.6
