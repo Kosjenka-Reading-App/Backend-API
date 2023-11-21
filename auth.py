@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr
 
-import models, schemas
+import models, schemas, crud
 import jwt
 import time
 import bcrypt
@@ -126,5 +126,21 @@ def createPasswortResetToken(email: EmailStr, valid_time: int):
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token
+
+def reset_password(db: Session, new_password: str, token: str):
+    try:
+        decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if decoded_token["expires"] < time.time():
+            return "TOKEN_EXPIRED"
+        account = get_account_by_email(db, decoded_token["email"])
+        if account is None:
+            return "EMAIL_NOT_FOUND"
+        hashed_pw = crud.password_hasher(new_password)
+        setattr(account, "password", hashed_pw)
+        db.commit()
+        db.refresh(account)
+        return "SUCCESS"
+    except:
+        return "ERROR"
     
             
