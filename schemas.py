@@ -71,9 +71,15 @@ class FullExerciseResponse(ExerciseResponse):
     # date:datetime
 
 
+class AccountPatch(BaseModel):
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
+
 class AccountIn(BaseModel):
     email: EmailStr
     password: str
+    is_superadmin: Optional[bool] = False
 
 
 class AccountOut(BaseModel):

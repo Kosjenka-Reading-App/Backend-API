@@ -207,7 +207,12 @@ def create_account(
     validate_access_level(auth_user, models.AccountType.Superadmin)
     if crud.email_is_registered(db, account_in.email):
         raise HTTPException(status_code=409, detail="Email already registered")
-    account_saved = crud.create_account(db, account_in, models.AccountType.Admin)
+
+    if account_in.is_superadmin:
+        type_account = models.AccountType.Superadmin
+    else:
+        type_account = models.AccountType.Admin
+    account_saved = crud.create_account(db, account_in, type_account)
     return account_saved
 
 
@@ -269,14 +274,16 @@ def delete_account(
 @app.patch("/accounts/{account_id}")
 def update_account(
     account_id: int,
-    account: schemas.AccountIn,
+    updated_data: schemas.AccountPatch,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     account = crud.get_account(db, auth_user=auth_user, account_id=account_id)
     if account is None:
         raise HTTPException(status_code=404, detail="account not found")
-    changed_account = crud.update_account(db, account_id=account_id, account=account)
+    changed_account = crud.update_account(
+        db, account_id=account_id, account=updated_data
+    )
     return changed_account
 
 
