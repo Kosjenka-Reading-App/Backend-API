@@ -3,6 +3,7 @@ from typing import Type
 from sqlalchemy.orm import Session
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr
+from dotenv import load_dotenv
 
 import models, schemas, crud
 import jwt
@@ -10,20 +11,20 @@ import time
 import bcrypt
 import os
 
-JWT_VALID_TIME_ACCESS = 60 * 20  # 20min
-JWT_VALID_TIME_REFRESH = 60 * 60 * 24 * 7  # One week
-JWT_VALID_TIME_PWD_RESET = 60 * 10  # 10min
-JWT_SECRET = "C0ddVvlcaL4UuChF8ckFQoVCGbtizyvK"
-JWT_ALGORITHM = "HS256"
+JWT_VALID_TIME_ACCESS = int(os.environ["JWT_VALID_TIME_ACCESS"])  # 60 * 20  # 20min
+JWT_VALID_TIME_REFRESH =  int(os.environ["JWT_VALID_TIME_REFRESH"])  # 60 * 60 * 24 * 7  # One week
+JWT_VALID_TIME_PWD_RESET =  int(os.environ["JWT_VALID_TIME_PWD_RESET"]) # 60 * 10  # 10min
+JWT_SECRET = os.environ["JWT_SECRET"]  # "C0ddVvlcaL4UuChF8ckFQoVCGbtizyvK"
+JWT_ALGORITHM = os.environ["JWT_ALGORITHM"]  # "HS256"
 
 # Mail Config
 conf = ConnectionConfig(
-    MAIL_USERNAME="kosjenka.readingapp@gmail.com",
-    MAIL_PASSWORD="qcjb hvps xmlf rtpm",
-    MAIL_FROM="kosjenka.readingapp@gmail.com",
-    MAIL_PORT=587,
-    MAIL_SERVER="smtp.gmail.com",
-    MAIL_FROM_NAME="Kosjenka Support",
+    MAIL_USERNAME=os.environ["MAIL_USERNAME"],  # "kosjenka.readingapp@gmail.com",
+    MAIL_PASSWORD=os.environ["MAIL_PASSWORD"],  # "qcjb hvps xmlf rtpm",
+    MAIL_FROM=os.environ["MAIL_USERNAME"],  # "kosjenka.readingapp@gmail.com",
+    MAIL_PORT= int(os.environ["MAIL_PORT"]),  # 587,
+    MAIL_SERVER=os.environ["MAIL_SERVER"],  # "smtp.gmail.com",
+    MAIL_FROM_NAME=os.environ["MAIL_FROM_NAME"],  # "Kosjenka Support",
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
     USE_CREDENTIALS=True,
@@ -105,13 +106,14 @@ def get_account_by_email(db: Session, email: EmailStr):
     return account
 
 
-async def send_password_reset_mail(account: models.Account, base_url: str):
+async def send_password_reset_mail(account: models.Account):
     token = createPasswortResetToken(
         email=account.email, valid_time=JWT_VALID_TIME_PWD_RESET
     )
+    link_base = os.environ["PASSWORD_RESET_LINK"]
     template_body = {
         "user": account.email,
-        "url": f"{base_url}reset_password?token={token}",
+        "url": f"{link_base}?token={token}",
         "expire_in_minutes": (JWT_VALID_TIME_PWD_RESET / 60),
     }
     message = MessageSchema(
