@@ -160,6 +160,12 @@ def password_hasher(raw_password: str):
 
 
 def get_account(db: Session, auth_user: schemas.AuthSchema, account_id: int):
+    if auth_user.account_id == account_id:
+        return (
+        db.query(models.Account)
+        .filter(models.Account.id_account == account_id)
+        .first()
+    )
     if models.AccountType(auth_user.account_category) == models.AccountType.Superadmin:
         return (
             db.query(models.Account)
@@ -167,12 +173,6 @@ def get_account(db: Session, auth_user: schemas.AuthSchema, account_id: int):
                 models.Account.id_account == account_id,
                 models.Account.account_category == models.AccountType.Admin,
             )
-            .first()
-        )
-    if auth_user.account_id == account_id:
-        return (
-            db.query(models.Account)
-            .filter(models.Account.id_account == account_id)
             .first()
         )
     return None
@@ -185,7 +185,7 @@ def delete_account(db: Session, account_id: int):
     db.commit()
 
 
-def update_account(db: Session, account_id: int, account: schemas.AccountOut):
+def update_account(db: Session, account_id: int, account: schemas.AccountPatch):
     stored_account = (
         db.query(models.Account).filter(models.Account.id_account == account_id).first()
     )
