@@ -269,14 +269,14 @@ def delete_account(
 @app.patch("/accounts/{account_id}")
 def update_account(
     account_id: int,
-    account: schemas.AccountIn,
+    updated_data: schemas.AccountPatch,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     account = crud.get_account(db, auth_user=auth_user, account_id=account_id)
     if account is None:
         raise HTTPException(status_code=404, detail="account not found")
-    changed_account = crud.update_account(db, account_id=account_id, account=account)
+    changed_account = crud.update_account(db, account_id=account_id, account=updated_data)
     return changed_account
 
 
