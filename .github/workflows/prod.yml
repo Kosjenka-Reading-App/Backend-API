@@ -44,7 +44,7 @@ jobs:
           images: ghcr.io/dostini/api
 
       - name: Crate env file with secrets
-        run: 
+        run: |
           echo "DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" >> .env
           echo "JWT_SECRET=${{ secrets.DEV_JWT_SECRET }}" >> .env
           echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env
