@@ -20,24 +20,29 @@ def test_create_account(superadmin_token):
 
 
 def test_update_account(superadmin_token):
+    # Get the superadmin
     accounts = client.get(
         "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
     ).json()
     account_id = accounts[0]["id_account"]
+    # Get the superadmin's account
     original_account = client.get(
         f"http://localhost:8000/accounts/{account_id}",
         headers=auth_header(superadmin_token),
     ).json()
     body = {"email": "update@gmail.com"}
+    # Update the email
     client.patch(
         f"http://localhost:8000/accounts/{account_id}",
         json=body,
         headers=auth_header(superadmin_token),
     ).json()
+    # Get the superadmin's update account
     updated_account = client.get(
         f"http://localhost:8000/accounts/{account_id}",
         headers=auth_header(superadmin_token),
     ).json()
+    # Check that the email has been updated
     for key in updated_account:
         if key == "email":
             assert updated_account[key] == "update@gmail.com"
