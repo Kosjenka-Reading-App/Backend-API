@@ -414,30 +414,49 @@ def me(
         raise HTTPException(status_code=404, detail="Account not found")
     return db_account
 
+
 # Password Reset
 @app.post("/forgot_password")
-async def send_password_mail(forget_passwort_input: schemas.ForgetPasswordSchema,request: Request, db: Session = Depends(get_db)):
+async def send_password_mail(
+    forget_passwort_input: schemas.ForgetPasswordSchema,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     account = auth.get_account_by_email(db=db, email=forget_passwort_input.email)
-    if account is None:           
+    if account is None:
         raise HTTPException(status_code=404, detail=f"Email not found")
     try:
-        await auth.send_password_reset_mail(account=account, base_url=str(request.base_url))
-        return {"result": f"An email has been sent to {account.email} with a link for password reset."}
+        await auth.send_password_reset_mail(
+            account=account, base_url=str(request.base_url)
+        )
+        return {
+            "result": f"An email has been sent to {account.email} with a link for password reset."
+        }
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An unexpected error occurred"
-        )        
-    
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
+
+
 @app.get("/reset_password", response_class=HTMLResponse)
 def account_reset_password(request: Request):
-    token = request.query_params.get('token')
-    return templates.TemplateResponse("reset_password.html",{"request": request, "token": token})
+    token = request.query_params.get("token")
+    return templates.TemplateResponse(
+        "reset_password.html", {"request": request, "token": token}
+    )
+
 
 @app.post("/reset_password", response_class=HTMLResponse)
-def account_reset_password_result(request: Request, new_password: str = Form(...), token: str = Form(...), db: Session = Depends(get_db)):
+def account_reset_password_result(
+    request: Request,
+    new_password: str = Form(...),
+    token: str = Form(...),
+    db: Session = Depends(get_db),
+):
     result = auth.reset_password(db, new_password, token)
-    return templates.TemplateResponse("reset_password_result.html",{"request": request, "success": result})
-        
+    return templates.TemplateResponse(
+        "reset_password_result.html", {"request": request, "success": result}
+    )
+
+
 # CreateSuperadmin just for Debugging
 @app.post("/createsuperadmin", response_model=schemas.AccountOut)
 def createsuperadmin_only_for_debugging(

@@ -16,19 +16,19 @@ JWT_VALID_TIME_PWD_RESET = 60 * 10  # 10min
 JWT_SECRET = "C0ddVvlcaL4UuChF8ckFQoVCGbtizyvK"
 JWT_ALGORITHM = "HS256"
 
-#Mail Config
+# Mail Config
 conf = ConnectionConfig(
-    MAIL_USERNAME = "kosjenka.readingapp@gmail.com",
-    MAIL_PASSWORD = "qcjb hvps xmlf rtpm",
-    MAIL_FROM = "kosjenka.readingapp@gmail.com",
-    MAIL_PORT = 587,
-    MAIL_SERVER = "smtp.gmail.com",
+    MAIL_USERNAME="kosjenka.readingapp@gmail.com",
+    MAIL_PASSWORD="qcjb hvps xmlf rtpm",
+    MAIL_FROM="kosjenka.readingapp@gmail.com",
+    MAIL_PORT=587,
+    MAIL_SERVER="smtp.gmail.com",
     MAIL_FROM_NAME="Kosjenka Support",
-    MAIL_STARTTLS = True,
-    MAIL_SSL_TLS = False,
-    USE_CREDENTIALS = True,
-    VALIDATE_CERTS = False,
-    TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), 'html_templates')
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=False,
+    TEMPLATE_FOLDER=os.path.join(os.path.dirname(__file__), "html_templates"),
 )
 
 
@@ -98,27 +98,32 @@ def generate_refresh_token(old_token: str, decoded_token: Type[schemas.AuthSchem
     reponse.refresh_token = old_token
     return reponse
 
-#Password reset
+
+# Password reset
 def get_account_by_email(db: Session, email: EmailStr):
     account = db.query(models.Account).filter(models.Account.email == email).first()
     return account
-    
+
+
 async def send_password_reset_mail(account: models.Account, base_url: str):
-    token = createPasswortResetToken(email=account.email, valid_time=JWT_VALID_TIME_PWD_RESET)
+    token = createPasswortResetToken(
+        email=account.email, valid_time=JWT_VALID_TIME_PWD_RESET
+    )
     template_body = {
         "user": account.email,
         "url": f"{base_url}reset_password?token={token}",
-        "expire_in_minutes": (JWT_VALID_TIME_PWD_RESET / 60)
-    }    
+        "expire_in_minutes": (JWT_VALID_TIME_PWD_RESET / 60),
+    }
     message = MessageSchema(
         subject="Kosjenka - Password Reset",
         recipients=[account.email],
         template_body=template_body,
-        subtype=MessageType.html
+        subtype=MessageType.html,
     )
     fm = FastMail(conf)
     await fm.send_message(message, template_name="reset_password_email.html")
-         
+
+
 def createPasswortResetToken(email: EmailStr, valid_time: int):
     payload = {
         "email": email,
@@ -126,6 +131,7 @@ def createPasswortResetToken(email: EmailStr, valid_time: int):
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token
+
 
 def reset_password(db: Session, new_password: str, token: str):
     try:
@@ -142,5 +148,3 @@ def reset_password(db: Session, new_password: str, token: str):
         return "SUCCESS"
     except:
         return "ERROR"
-    
-            
