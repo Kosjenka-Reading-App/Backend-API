@@ -118,7 +118,7 @@ async def send_password_reset_mail(account: models.Account):
     template_body = {
         "user": account.email,
         "url": f"{link_base}?token={token}",
-        "expire_in_minutes": (JWT_VALID_TIME_PWD_RESET / 60),
+        "expire_in_minutes": int(JWT_VALID_TIME_PWD_RESET / 60),
     }
     message = MessageSchema(
         subject="Kosjenka - Password Reset",
