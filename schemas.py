@@ -70,9 +70,11 @@ class FullExerciseResponse(ExerciseResponse):
     text: str
     # date:datetime
 
+
 class AccountPatch(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+
 
 class AccountIn(BaseModel):
     email: EmailStr
