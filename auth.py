@@ -12,8 +12,12 @@ import bcrypt
 import os
 
 JWT_VALID_TIME_ACCESS = int(os.environ["JWT_VALID_TIME_ACCESS"])  # 60 * 20  # 20min
-JWT_VALID_TIME_REFRESH =  int(os.environ["JWT_VALID_TIME_REFRESH"])  # 60 * 60 * 24 * 7  # One week
-JWT_VALID_TIME_PWD_RESET =  int(os.environ["JWT_VALID_TIME_PWD_RESET"]) # 60 * 10  # 10min
+JWT_VALID_TIME_REFRESH = int(
+    os.environ["JWT_VALID_TIME_REFRESH"]
+)  # 60 * 60 * 24 * 7  # One week
+JWT_VALID_TIME_PWD_RESET = int(
+    os.environ["JWT_VALID_TIME_PWD_RESET"]
+)  # 60 * 10  # 10min
 JWT_SECRET = os.environ["JWT_SECRET"]  # "C0ddVvlcaL4UuChF8ckFQoVCGbtizyvK"
 JWT_ALGORITHM = os.environ["JWT_ALGORITHM"]  # "HS256"
 
@@ -22,7 +26,7 @@ conf = ConnectionConfig(
     MAIL_USERNAME=os.environ["MAIL_USERNAME"],  # "kosjenka.readingapp@gmail.com",
     MAIL_PASSWORD=os.environ["MAIL_PASSWORD"],  # "qcjb hvps xmlf rtpm",
     MAIL_FROM=os.environ["MAIL_USERNAME"],  # "kosjenka.readingapp@gmail.com",
-    MAIL_PORT= int(os.environ["MAIL_PORT"]),  # 587,
+    MAIL_PORT=int(os.environ["MAIL_PORT"]),  # 587,
     MAIL_SERVER=os.environ["MAIL_SERVER"],  # "smtp.gmail.com",
     MAIL_FROM_NAME=os.environ["MAIL_FROM_NAME"],  # "Kosjenka Support",
     MAIL_STARTTLS=True,
