@@ -2,6 +2,9 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi import Request, Form
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 import crud
 import models
@@ -11,6 +14,8 @@ from auth_bearer import JWTBearer
 from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
+
+templates = Jinja2Templates(directory="html_templates")
 
 app = FastAPI()
 app.add_middleware(
@@ -408,6 +413,43 @@ def me(
     if db_account is None:
         raise HTTPException(status_code=404, detail="Account not found")
     return db_account
+
+
+# Password Reset
+@app.post("/password/forgot")
+async def send_password_mail(
+    forget_passwort_input: schemas.ForgetPasswordSchema,
+    db: Session = Depends(get_db),
+):
+    account = auth.get_account_by_email(db=db, email=forget_passwort_input.email)
+    if account is None:
+        raise HTTPException(status_code=404, detail=f"Email not found")
+    try:
+        await auth.send_password_reset_mail(account=account)
+        return {
+            "result": f"An email has been sent to {account.email} with a link for password reset."
+        }
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
+
+
+@app.post("/password/reset", response_model=schemas.ResetPasswordResultSchema)
+def account_reset_password_result(
+    input: schemas.ResetPasswordSchema,
+    db: Session = Depends(get_db),
+):
+    result = auth.reset_password(db, input.password, input.token)
+    if result == "SUCCESS":
+        result = schemas.ResetPasswordResultSchema
+        result.details = "Successfully updated password"
+        return result
+    elif result == "TOKEN_EXPIRED":
+        raise HTTPException(status_code=401, detail="Token is expired")
+    elif result == "EMAIL_NOT_FOUND":
+        raise HTTPException(status_code=404, detail="Email not found")
+    else:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 
 # CreateSuperadmin just for Debugging
