@@ -2,7 +2,9 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi import Request, Form
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 import crud
 import models
@@ -12,6 +14,8 @@ from auth_bearer import JWTBearer
 from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
+
+templates = Jinja2Templates(directory="html_templates")
 
 app = FastAPI()
 app.add_middleware(
@@ -415,7 +419,7 @@ def me(
 async def send_password_mail(forget_passwort_input: schemas.ForgetPasswordSchema,request: Request, db: Session = Depends(get_db)):
     account = auth.get_account_by_email(db=db, email=forget_passwort_input.email)
     if account is None:           
-        raise HTTPException(status_code=400, detail=f"Email not found")
+        raise HTTPException(status_code=404, detail=f"Email not found")
     try:
         await auth.send_password_reset_mail(account=account, base_url=str(request.base_url))
         return {"result": f"An email has been sent to {account.email} with a link for password reset."}
@@ -429,6 +433,10 @@ def account_reset_password(request: Request):
     token = request.query_params.get('token')
     return templates.TemplateResponse("reset_password.html",{"request": request, "token": token})
 
+@app.post("/reset_password", response_class=HTMLResponse)
+def account_reset_password_result(request: Request, new_password: str = Form(...), token: str = Form(...), db: Session = Depends(get_db)):
+    result = auth.reset_password(db, new_password, token)
+    return templates.TemplateResponse("reset_password_result.html",{"request": request, "success": result})
         
 # CreateSuperadmin just for Debugging
 @app.post("/createsuperadmin", response_model=schemas.AccountOut)
