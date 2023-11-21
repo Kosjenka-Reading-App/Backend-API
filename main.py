@@ -195,7 +195,7 @@ def track_exercise_completion(
 
 @app.post("/accounts", response_model=schemas.AccountOut)
 def create_account(
-    account_in: schemas.AccountIn,
+    account_in: schemas.AccountPostAdmin,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
