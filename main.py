@@ -416,7 +416,7 @@ def me(
 
 
 # Password Reset
-@app.post("/forgot_password")
+@app.post("/password/forgot")
 async def send_password_mail(
     forget_passwort_input: schemas.ForgetPasswordSchema,
     request: Request,
@@ -436,25 +436,32 @@ async def send_password_mail(
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
 
 
-@app.get("/reset_password", response_class=HTMLResponse)
-def account_reset_password(request: Request):
-    token = request.query_params.get("token")
-    return templates.TemplateResponse(
-        "reset_password.html", {"request": request, "token": token}
-    )
+#@app.get("/reset_password", response_class=HTMLResponse)
+#def account_reset_password(request: Request):
+#    token = request.query_params.get("token")
+#    return templates.TemplateResponse(
+#        "reset_password.html", {"request": request, "token": token}
+#    )
 
 
-@app.post("/reset_password", response_class=HTMLResponse)
+@app.post("/password/reset", response_model=schemas.ResetPasswordResultSchema)
 def account_reset_password_result(
+    input: schemas.ResetPasswordSchema,
     request: Request,
-    new_password: str = Form(...),
-    token: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    result = auth.reset_password(db, new_password, token)
-    return templates.TemplateResponse(
-        "reset_password_result.html", {"request": request, "success": result}
-    )
+    
+    result = auth.reset_password(db, input.password, input.token)
+    if(result ==  "SUCCESS"): 
+        result = schemas.ResetPasswordResultSchema
+        result.details = "Successfully updated password"
+        return result
+    elif(result == "TOKEN_EXPIRED"):
+        raise HTTPException(status_code=401, detail="Token is expired")
+    elif(result == "EMAIL_NOT_FOUND"):
+        raise HTTPException(status_code=404, detail="Email not found")
+    else:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 
 # CreateSuperadmin just for Debugging

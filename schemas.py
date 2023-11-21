@@ -129,3 +129,10 @@ class MeSchema(BaseModel):
 # Forget Password
 class ForgetPasswordSchema(BaseModel):
     email: EmailStr
+    
+class ResetPasswordSchema(BaseModel):
+    password: str
+    token: str
+
+class ResetPasswordResultSchema(BaseModel):
+    details: str
