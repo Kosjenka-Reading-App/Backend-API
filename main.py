@@ -303,8 +303,9 @@ def read_all_users(
 def read_user(
     user_id: int,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id, account_id=auth_user.account_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
@@ -315,8 +316,9 @@ def update_user(
     user_id: int,
     user: schemas.UserPatch,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id, account_id=auth_user.account_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     db_user = crud.update_user(db, user_id=user_id, user=user)
@@ -327,8 +329,9 @@ def update_user(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id, account_id=auth_user.account_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     crud.delete_user(db=db, user_id=user_id)
