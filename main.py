@@ -348,7 +348,11 @@ def create_user(
 
 
 @app.post("/categories/{category}", response_model=schemas.Category)
-def create_category(category: str, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())):
+def create_category(
+    category: str,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
     validate_access_level(auth_user, models.AccountType.Admin)
     stored_category = crud.get_category(db, category=category)
     if stored_category is not None:
@@ -373,7 +377,11 @@ def read_categories(
 
 
 @app.delete("/categories/{category}")
-def delete_category(category: str, db: Session = Depends(get_db),auth_user: schemas.AuthSchema = Depends(JWTBearer())):
+def delete_category(
+    category: str,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
     validate_access_level(auth_user, models.AccountType.Admin)
     db_category = crud.get_category(db, category=category)
     if db_category is None:
@@ -384,7 +392,10 @@ def delete_category(category: str, db: Session = Depends(get_db),auth_user: sche
 
 @app.patch("/categories/{old_category}", response_model=schemas.Category)
 def update_category(
-    old_category: str, new_category: schemas.Category, db: Session = Depends(get_db), auth_user: schemas.AuthSchema = Depends(JWTBearer())
+    old_category: str,
+    new_category: schemas.Category,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     stored_category = crud.get_category(db, category=old_category)
     if stored_category is None:
