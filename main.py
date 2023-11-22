@@ -397,6 +397,7 @@ def update_category(
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
+    validate_access_level(auth_user, models.AccountType.Admin)
     stored_category = crud.get_category(db, category=old_category)
     if stored_category is None:
         raise HTTPException(status_code=404, detail="category not found")
