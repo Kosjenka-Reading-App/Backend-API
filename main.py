@@ -54,7 +54,7 @@ def validate_user_belongs_to_account(
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
     db: Session = Depends(get_db),
 ):
-    db_user = crud.get_user(db, user_id)
+    db_user = crud.get_user(db, user_id, auth_user.account_id)
     if (
         db_user is None
         or schemas.UserSchema.model_validate(db_user).id_account != auth_user.account_id
@@ -188,7 +188,7 @@ def track_exercise_completion(
 ):
     validate_access_level(auth_user, models.AccountType.Regular)
     validate_user_belongs_to_account(completion.user_id, auth_user, db)
-    db_user = crud.get_user(db, completion.user_id)
+    db_user = crud.get_user(db, completion.user_id, auth_user.account_id)
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
@@ -348,7 +348,12 @@ def create_user(
 
 
 @app.post("/categories/{category}", response_model=schemas.Category)
-def create_category(category: str, db: Session = Depends(get_db)):
+def create_category(
+    category: str,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    validate_access_level(auth_user, models.AccountType.Admin)
     stored_category = crud.get_category(db, category=category)
     if stored_category is not None:
         raise HTTPException(status_code=404, detail="category already exists")
@@ -362,7 +367,9 @@ def read_categories(
     order: schemas.Order | None = None,
     name_like: str | None = None,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
+    validate_access_level(auth_user, models.AccountType.Regular)
     db_categories = crud.get_categories(
         db, skip=skip, limit=limit, order=order, name_like=name_like
     )
@@ -370,7 +377,12 @@ def read_categories(
 
 
 @app.delete("/categories/{category}")
-def delete_category(category: str, db: Session = Depends(get_db)):
+def delete_category(
+    category: str,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    validate_access_level(auth_user, models.AccountType.Admin)
     db_category = crud.get_category(db, category=category)
     if db_category is None:
         raise HTTPException(status_code=404, detail="category not found")
@@ -380,8 +392,12 @@ def delete_category(category: str, db: Session = Depends(get_db)):
 
 @app.patch("/categories/{old_category}", response_model=schemas.Category)
 def update_category(
-    old_category: str, new_category: schemas.Category, db: Session = Depends(get_db)
+    old_category: str,
+    new_category: schemas.Category,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
+    validate_access_level(auth_user, models.AccountType.Admin)
     stored_category = crud.get_category(db, category=old_category)
     if stored_category is None:
         raise HTTPException(status_code=404, detail="category not found")
