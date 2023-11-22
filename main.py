@@ -188,7 +188,7 @@ def track_exercise_completion(
 ):
     validate_access_level(auth_user, models.AccountType.Regular)
     validate_user_belongs_to_account(completion.user_id, auth_user, db)
-    db_user = crud.get_user(db, completion.user_id,auth_user.account_id)
+    db_user = crud.get_user(db, completion.user_id, auth_user.account_id)
     db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
