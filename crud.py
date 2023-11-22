@@ -253,8 +253,13 @@ def get_users(db: Session, account_id: int, skip: int = 0, limit: int = 100):
     )
 
 
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id_user == user_id).first()
+def get_user(db: Session, user_id: int, account_id: int):
+    return (
+        db.query(models.User)
+        .filter(models.User.id_account == account_id)
+        .filter(models.User.id_user == user_id)
+        .first()
+    )
 
 
 def update_user(db: Session, user_id: int, user: schemas.UserPatch):
