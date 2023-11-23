@@ -36,6 +36,12 @@ To experiment with the ORM, run:
 ipython3 -i test/sqlalchemy_console.py
 ```
 
+To see the coverage report:
+```
+coverage run -m pytest
+coverage report
+```
+
 
 # Sources
 
