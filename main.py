@@ -476,14 +476,3 @@ def account_reset_password_result(
         raise HTTPException(status_code=404, detail="Email not found")
     else:
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
-
-
-# CreateSuperadmin just for Debugging
-@app.post("/createsuperadmin", response_model=schemas.AccountOut)
-def createsuperadmin_only_for_debugging(
-    account_in: schemas.AccountIn, db: Session = Depends(get_db)
-):
-    if crud.email_is_registered(db, account_in.email):
-        raise HTTPException(status_code=409, detail="Email already registered")
-    account_saved = crud.create_account(db, account_in, models.AccountType.Superadmin)
-    return account_saved

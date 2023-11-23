@@ -1,7 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from crud import password_hasher
+from database import SessionLocal
 from main import app
+import models
 
 
 client = TestClient(app)
@@ -40,14 +43,15 @@ def superadmin_token():
     account_details = {"email": "superadmin@gmail.com", "password": "superadmin"}
     resp = client.post("http://localhost:8000/login", json=account_details).json()
     if "detail" in resp and resp["detail"] == "Username/Password wrong":
-        account_details = {
-            "email": "superadmin@gmail.com",
-            "password": "superadmin",
-            "is_superadmin": True,
-        }
-        resp = client.post(
-            "http://localhost:8000/createsuperadmin", json=account_details
-        ).json()
+        db = SessionLocal()
+        account_db = models.Account(
+            email="superadmin@gmail.com",
+            account_category=models.AccountType.Superadmin,
+            password=password_hasher("superadmin"),
+        )
+        db.add(account_db)
+        db.commit()
+        db.close()
         resp = client.post("http://localhost:8000/login", json=account_details).json()
     access_token = resp["access_token"]
     yield access_token
