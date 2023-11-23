@@ -40,6 +40,7 @@ To see the coverage report:
 ```
 coverage run -m pytest
 coverage report
+coverage html
 ```
 
 
