@@ -165,3 +165,23 @@ def test_create_error_account(superadmin_token):
     ).json()
     account_count_after = len(accounts_after)
     assert account_count_after == account_count_before
+
+def test_update_account_invalid_email(superadmin_token):
+    # Try updating an account with invalid data
+    invalid_data = {"email": "invalid_email"}
+    resp = client.patch(
+        "http://localhost:8000/accounts/1",  # superadmin is ID 1
+        json=invalid_data,
+        headers=auth_header(superadmin_token),
+    )
+    assert resp.status_code == 422  # Expecting a validation error
+
+def test_update_account_invalid_email(superadmin_token):
+    # Try updating a non-existent account
+    non_existent_account_id = 999999  # Assuming this ID doesn't exist
+    resp = client.patch(
+        f"http://localhost:8000/accounts/{non_existent_account_id}",
+        json={"email": "new_email@gmail.com"},
+        headers=auth_header(superadmin_token),
+    )
+    assert resp.status_code == 404  # Expecting a not found error
