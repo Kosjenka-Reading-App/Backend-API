@@ -187,3 +187,24 @@ def test_update_account_invalid_email(superadmin_token):
         headers=auth_header(superadmin_token),
     )
     assert resp.status_code == 404  # Expecting a not found error
+
+def test_send_password_mail_superadmin(superadmin_token):
+    reset_mail_payload = {"email": "superadmin@gmail.com"}
+    resp = client.post(
+        "http://localhost:8000/password/forgot",
+        json=reset_mail_payload,
+        headers=auth_header(superadmin_token),
+    )
+    assert resp.status_code == 200
+    assert "An email has been sent to superadmin@gmail.com with a link for password reset." in resp.json()["result"]
+
+def test_send_password_mail_user(regular_token):
+    reset_mail_payload = {"email": "regular@gmail.com"}
+    resp = client.post(
+        "http://localhost:8000/password/forgot",
+        json=reset_mail_payload,
+        headers=auth_header(regular_token),
+    )
+    print(resp.json())
+    assert resp.status_code == 200
+    assert "An email has been sent to regular@gmail.com with a link for password reset." in resp.json()["result"]
