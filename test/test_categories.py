@@ -200,8 +200,10 @@ def test_delete_nonexistent_category(admin_token):
 def test_patch_nonexistent_category(admin_token):
     # Assume nonexistent_category doesn't exist
     non_existent_category = "nonexistent_category"
+    body = {"category": ["cats", "mice"]}
     resp = client.patch(
         f"http://localhost:8000/categories/{non_existent_category}",
+        json=body,
         headers=auth_header(admin_token),
     )
     assert resp.status_code == 404 
