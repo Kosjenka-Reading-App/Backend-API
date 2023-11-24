@@ -130,6 +130,7 @@ def test_me_for_deleted_account():
         "password": "secret",
     }
     good_request(client.post, "http://localhost:8000/register", json=new_account)
+    bad_request(client.post,409,"http://localhost:8000/register", json=new_account)
     login_resp = good_request(
         client.post, "http://localhost:8000/login", json=new_account
     )
@@ -141,6 +142,17 @@ def test_me_for_deleted_account():
         headers=auth_header,
     )
     bad_request(client.get, 404, "http://localhost:8000/me", headers=auth_header)
+
+def test_delete_nonexistent_user(regular_token):
+    # Assuming user_id 99999 does not exist
+    user_id_to_delete = 99999
+    # Try to delete a user that doesn't exist
+    resp = client.delete(
+        f"http://localhost:8000/users/{user_id_to_delete}",
+        headers=auth_header(regular_token),
+    )
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "User not found"
 
 
 def test_create_error_account(superadmin_token):
