@@ -143,7 +143,6 @@ def test_me_for_deleted_account():
     bad_request(client.get, 404, "http://localhost:8000/me", headers=auth_header)
 
 
-
 def test_create_error_account(superadmin_token):
     # Get the initial count of accounts
     accounts_before = client.get(
