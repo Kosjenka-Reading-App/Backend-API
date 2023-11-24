@@ -187,10 +187,20 @@ def test_search_categories(regular_token):
     print(categories)
     assert categories[0] == "one mouse"
 
-def test_get_nonexistent_category(admin_token):
+def test_delete_nonexistent_category(admin_token):
     # Assume nonexistent_category doesn't exist
     non_existent_category = "nonexistent_category"
-    resp = client.get(
+    resp = client.delete(
+        f"http://localhost:8000/categories/{non_existent_category}",
+        headers=auth_header(admin_token),
+    )
+    assert resp.status_code == 404 
+    assert resp.json()["detail"] == "category not found"
+
+def test_patch_nonexistent_category(admin_token):
+    # Assume nonexistent_category doesn't exist
+    non_existent_category = "nonexistent_category"
+    resp = client.patch(
         f"http://localhost:8000/categories/{non_existent_category}",
         headers=auth_header(admin_token),
     )
