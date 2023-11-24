@@ -141,3 +141,28 @@ def test_me_for_deleted_account():
         headers=auth_header,
     )
     bad_request(client.get, 404, "http://localhost:8000/me", headers=auth_header)
+
+
+
+def test_create_error_account(superadmin_token):
+    # Get the initial count of accounts
+    accounts_before = client.get(
+        "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
+    ).json()
+    account_count_before = len(accounts_before)
+
+    # Try creating an account with invalid data
+    invalid_account = {"email": "invalid_email", "password": "password1234"}
+    resp = client.post(
+        "http://localhost:8000/accounts",
+        json=invalid_account,
+        headers=auth_header(superadmin_token),
+    )
+    assert resp.status_code == 422  # Expecting a validation error
+
+    # Ensure that the count of accounts remains the same
+    accounts_after = client.get(
+        "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
+    ).json()
+    account_count_after = len(accounts_after)
+    assert account_count_after == account_count_before
