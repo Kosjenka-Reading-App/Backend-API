@@ -166,6 +166,7 @@ def test_create_error_account(superadmin_token):
     account_count_after = len(accounts_after)
     assert account_count_after == account_count_before
 
+
 def test_update_account_invalid_email(superadmin_token):
     # Try updating an account with invalid data
     invalid_data = {"email": "invalid_email"}
@@ -175,6 +176,7 @@ def test_update_account_invalid_email(superadmin_token):
         headers=auth_header(superadmin_token),
     )
     assert resp.status_code == 422  # Expecting a validation error
+
 
 def test_update_account_invalid_email(superadmin_token):
     # Try updating a non-existent account

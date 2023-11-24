@@ -7,7 +7,7 @@ def test_refresh(superadmin_token):
     # Perform a login to obtain a refresh token
     account_details = {"email": "superadmin@gmail.com", "password": "superadmin"}
     login_resp = client.post("http://localhost:8000/login", json=account_details)
-    assert login_resp.status_code == 200 
+    assert login_resp.status_code == 200
     refresh_token = login_resp.json().get("refresh_token")
     # Use the obtained refresh token to refresh the access token
     resp = client.post(
