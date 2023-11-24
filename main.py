@@ -65,7 +65,6 @@ def validate_user_belongs_to_account(
         )
 
 
-
 @app.get("/healthz", status_code=200)
 def health_check():
     return {"status": "ok"}

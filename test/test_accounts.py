@@ -130,7 +130,7 @@ def test_me_for_deleted_account():
         "password": "secret",
     }
     good_request(client.post, "http://localhost:8000/register", json=new_account)
-    bad_request(client.post,409,"http://localhost:8000/register", json=new_account)
+    bad_request(client.post, 409, "http://localhost:8000/register", json=new_account)
     login_resp = good_request(
         client.post, "http://localhost:8000/login", json=new_account
     )
@@ -142,6 +142,7 @@ def test_me_for_deleted_account():
         headers=auth_header,
     )
     bad_request(client.get, 404, "http://localhost:8000/me", headers=auth_header)
+
 
 def test_delete_nonexistent_user(regular_token):
     # Assuming user_id 99999 does not exist
@@ -200,6 +201,7 @@ def test_update_account_invalid_email(superadmin_token):
     )
     assert resp.status_code == 404  # Expecting a not found error
 
+
 def test_send_password_mail_superadmin(superadmin_token):
     reset_mail_payload = {"email": "superadmin@gmail.com"}
     resp = client.post(
@@ -208,7 +210,11 @@ def test_send_password_mail_superadmin(superadmin_token):
         headers=auth_header(superadmin_token),
     )
     assert resp.status_code == 200
-    assert "An email has been sent to superadmin@gmail.com with a link for password reset." in resp.json()["result"]
+    assert (
+        "An email has been sent to superadmin@gmail.com with a link for password reset."
+        in resp.json()["result"]
+    )
+
 
 def test_send_password_mail_user(regular_token):
     reset_mail_payload = {"email": "regular@gmail.com"}
@@ -219,4 +225,7 @@ def test_send_password_mail_user(regular_token):
     )
     print(resp.json())
     assert resp.status_code == 200
-    assert "An email has been sent to regular@gmail.com with a link for password reset." in resp.json()["result"]
+    assert (
+        "An email has been sent to regular@gmail.com with a link for password reset."
+        in resp.json()["result"]
+    )
