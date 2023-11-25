@@ -201,4 +201,3 @@ def test_update_account_invalid_email(superadmin_token):
         headers=auth_header(superadmin_token),
     )
     assert resp.status_code == 404  # Expecting a not found error
-
