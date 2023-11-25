@@ -2,9 +2,9 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from fastapi import Request, Form
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi_pagination import Page, add_pagination
+import fastapi_pagination
 
 import crud
 import models
@@ -87,10 +87,8 @@ def create_exercise(
     return crud.create_exercise(db=db, exercise=exercise)
 
 
-@app.get("/exercises", response_model=list[schemas.ExerciseResponse])
+@app.get("/exercises", response_model=Page[schemas.ExerciseResponse])
 def read_exercises(
-    skip: int = 0,
-    limit: int = 100,
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
@@ -100,7 +98,6 @@ def read_exercises(
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema | None = Depends(optional_auth),
 ):
-    print(auth_user)
     if user_id:
         if not auth_user:
             raise HTTPException(
@@ -111,13 +108,11 @@ def read_exercises(
     if category:
         db_category = crud.get_category(db, category)
         if db_category is None:
-            return []
+            db_category = models.Category(category="NULL")
     else:
         db_category = None
     exercises = crud.get_exercises(
         db,
-        skip=skip,
-        limit=limit,
         order_by=order_by,
         order=order,
         complexity=complexity,
@@ -125,6 +120,8 @@ def read_exercises(
         title_like=title_like,
         user_id=user_id,
     )
+    if user_id:
+        return fastapi_pagination.paginate(exercises)
     return exercises
 
 
@@ -224,10 +221,8 @@ def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db
     return account_saved
 
 
-@app.get("/accounts", response_model=list[schemas.AccountOut])
+@app.get("/accounts", response_model=Page[schemas.AccountOut])
 def get_all_accounts(
-    skip: int = 0,
-    limit: int = 100,
     order_by: schemas.AccountOrderBy | None = None,
     order: schemas.Order | None = None,
     email_like: str | None = None,
@@ -237,8 +232,6 @@ def get_all_accounts(
     validate_access_level(auth_user, models.AccountType.Superadmin)
     accounts = crud.get_accounts(
         db,
-        skip=skip,
-        limit=limit,
         order_by=order_by,
         order=order,
         email_like=email_like,
@@ -288,14 +281,12 @@ def update_account(
 
 
 # User
-@app.get("/users", response_model=list[schemas.UserSchema])
+@app.get("/users", response_model=Page[schemas.UserSchema])
 def read_all_users(
-    skip: int = 0,
-    limit: int = 100,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    users = crud.get_users(db, account_id=auth_user.account_id, skip=skip, limit=limit)
+    users = crud.get_users(db, account_id=auth_user.account_id)
     return users
 
 
@@ -360,19 +351,15 @@ def create_category(
     return crud.create_category(db=db, category=category)
 
 
-@app.get("/categories", response_model=list[str])
+@app.get("/categories", response_model=Page[schemas.Category])
 def read_categories(
-    skip: int = 0,
-    limit: int = 100,
     order: schemas.Order | None = None,
     name_like: str | None = None,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     validate_access_level(auth_user, models.AccountType.Regular)
-    db_categories = crud.get_categories(
-        db, skip=skip, limit=limit, order=order, name_like=name_like
-    )
+    db_categories = crud.get_categories(db, order=order, name_like=name_like)
     return db_categories
 
 
@@ -476,3 +463,6 @@ def account_reset_password_result(
         raise HTTPException(status_code=404, detail="Email not found")
     else:
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
+
+
+add_pagination(app)

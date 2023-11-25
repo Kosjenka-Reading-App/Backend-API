@@ -1,5 +1,6 @@
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
+from fastapi_pagination.ext.sqlalchemy import paginate
 
 import models, schemas
 import bcrypt
@@ -42,8 +43,6 @@ def get_exercise(db: Session, exercise_id: int, user_id: int | None = None):
 
 def get_exercises(
     db: Session,
-    skip: int = 0,
-    limit: int = 100,
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
@@ -51,7 +50,7 @@ def get_exercises(
     title_like: str | None = None,
     user_id: int | None = None,
 ):
-    exercises = db.query(models.Exercise)
+    exercises = select(models.Exercise)
     if complexity:
         exercises = exercises.filter(models.Exercise.complexity == complexity)
     if category:
@@ -61,7 +60,7 @@ def get_exercises(
     if user_id:
         exercises = (
             exercises.join(models.DoExercise, isouter=True)
-            .add_entity(models.DoExercise)
+            .add_columns(models.DoExercise)
             .filter(or_(models.DoExercise.user_id == 1, models.Exercise.users == None))
         )
     if order_by:
@@ -70,17 +69,16 @@ def get_exercises(
             if order == schemas.Order.desc
             else exercise_order_by_column[order_by]
         )
-    paginated_exercises = exercises.offset(skip).limit(limit)
     if user_id:
-        exercises = []
-        for ex, do_ex in paginated_exercises:
+        ex_with_completion = []
+        for ex, do_ex in db.execute(exercises):
             if do_ex:
                 ex_completion = schemas.ExerciseCompletion.model_validate(do_ex)
                 ex = schemas.FullExerciseResponse.model_validate(ex)
                 ex.completion = ex_completion
-            exercises.append(ex)
-        return exercises
-    return paginated_exercises.all()
+            ex_with_completion.append(ex)
+        return ex_with_completion
+    return paginate(db, exercises)
 
 
 def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
@@ -199,13 +197,11 @@ def update_account(db: Session, account_id: int, account: schemas.AccountPatch):
 
 def get_accounts(
     db: Session,
-    skip: int = 0,
-    limit: int = 100,
     order_by: schemas.AccountOrderBy | None = None,
     order: schemas.Order | None = None,
     email_like: str | None = None,
 ):
-    accounts = db.query(models.Account).filter(
+    accounts = select(models.Account).filter(
         or_(
             models.Account.account_category == models.AccountType.Admin,
             models.Account.account_category == models.AccountType.Superadmin,
@@ -219,7 +215,7 @@ def get_accounts(
             if order == schemas.Order.desc
             else account_order_by_column[order_by]
         )
-    return accounts.offset(skip).limit(limit).all()
+    return paginate(db, accounts)
 
 
 def create_account(
@@ -243,13 +239,9 @@ def email_is_registered(db: Session, email: str):
 
 
 # Users
-def get_users(db: Session, account_id: int, skip: int = 0, limit: int = 100):
-    return (
-        db.query(models.User)
-        .filter(models.User.id_account == account_id)
-        .offset(skip)
-        .limit(limit)
-        .all()
+def get_users(db: Session, account_id: int):
+    return paginate(
+        db, select(models.User).filter(models.User.id_account == account_id)
     )
 
 
@@ -304,12 +296,10 @@ def _update_exercise_categories(
 
 def get_categories(
     db: Session,
-    skip: int,
-    limit: int,
     order: schemas.Order | None,
     name_like: str | None,
 ):
-    categories = db.query(models.Category)
+    categories = select(models.Category)
     if name_like:
         categories = categories.filter(models.Category.category.like(f"%{name_like}%"))
     if order:
@@ -318,8 +308,7 @@ def get_categories(
             if order == schemas.Order.desc
             else models.Category.category
         )
-    categories = categories.offset(skip).limit(limit).all()
-    return [cat.category for cat in categories]
+    return paginate(db, categories)
 
 
 def get_category(db: Session, category: str):

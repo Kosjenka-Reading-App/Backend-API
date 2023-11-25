@@ -1,12 +1,14 @@
 from datetime import datetime
 import time
+
+from fastapi_pagination import add_pagination
 from conftest import client, auth_header
 
 
 def test_create_exercise(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises", headers=auth_header(admin_token)
-    ).json()
+    ).json()["items"]
     exercise_count = len(exercises)
     new_exercise = {
         "title": "Title of the exercise",
@@ -22,14 +24,14 @@ def test_create_exercise(admin_token):
         assert created_exercise[key] == new_exercise[key]
     exercises = client.get(
         "http://localhost:8000/exercises", headers=auth_header(admin_token)
-    ).json()
+    ).json()["items"]
     assert len(exercises) == exercise_count + 1
 
 
 def test_create_exercise_without_complexity(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises", headers=auth_header(admin_token)
-    ).json()
+    ).json()["items"]
     exercise_count = len(exercises)
     new_exercise = {
         "title": "Title of another exercise",
@@ -45,14 +47,14 @@ def test_create_exercise_without_complexity(admin_token):
     assert created_exercise["complexity"] == None
     exercises = client.get(
         "http://localhost:8000/exercises/", headers=auth_header(admin_token)
-    ).json()
+    ).json()["items"]
     assert len(exercises) == exercise_count + 1
 
 
 def test_get_exercises(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises", headers=auth_header(admin_token)
-    ).json()
+    ).json()["items"]
     assert set(exercises[0].keys()) == {
         "id",
         "title",
@@ -66,7 +68,7 @@ def test_get_exercises(admin_token):
 def test_get_exercise(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises/", headers=auth_header(admin_token)
-    ).json()
+    ).json()["items"]
     exercise_id = exercises[0]["id"]
     exercise = client.get(
         f"http://localhost:8000/exercises/{exercise_id}",
@@ -86,7 +88,7 @@ def test_get_exercise(admin_token):
 def test_update_exercise(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises", headers=auth_header(admin_token)
-    ).json()
+    ).json()["items"]
     exercise_id = exercises[0]["id"]
     original_exercise = client.get(
         f"http://localhost:8000/exercises/{exercise_id}",
@@ -122,13 +124,13 @@ def test_sort_exercises(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises?order_by=title",
         headers=auth_header(admin_token),
-    ).json()
+    ).json()["items"]
     titles = [exercise["title"] for exercise in exercises]
     assert titles == sorted(titles)
     exercises = client.get(
         "http://localhost:8000/exercises?order_by=title&order=desc",
         headers=auth_header(admin_token),
-    ).json()
+    ).json()["items"]
     titles = [exercise["title"] for exercise in exercises]
     assert titles == sorted(titles)[::-1]
 
@@ -137,7 +139,7 @@ def test_search_exercises(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises?title_like=another",
         headers=auth_header(admin_token),
-    ).json()
+    ).json()["items"]
     for exercise in exercises:
         assert exercise["title"] == "Title of another exercise"
 
@@ -145,7 +147,7 @@ def test_search_exercises(admin_token):
 def test_delete_exercise(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises", headers=auth_header(admin_token)
-    ).json()
+    ).json()["items"]
     assert len(exercises) > 0
     exercise_ids = {ex["id"] for ex in exercises}
     while exercise_ids:
@@ -158,7 +160,7 @@ def test_delete_exercise(admin_token):
             ex["id"]
             for ex in client.get(
                 "http://localhost:8000/exercises", headers=auth_header(admin_token)
-            ).json()
+            ).json()["items"]
         }
         assert len(remaining_exercise_ids) == len(exercise_ids)
         assert exercise_id not in remaining_exercise_ids
@@ -180,7 +182,7 @@ def test_sort_complexity(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises?order_by=complexity&order=asc",
         headers=auth_header(admin_token),
-    ).json()
+    ).json()["items"]
     assert [ex["complexity"] for ex in exercises] == [
         "easy",
         "easy",
@@ -192,7 +194,7 @@ def test_sort_complexity(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises?order_by=complexity&order=desc",
         headers=auth_header(admin_token),
-    ).json()
+    ).json()["items"]
     assert [ex["complexity"] for ex in exercises] == [
         "hard",
         "hard",
@@ -219,7 +221,7 @@ def test_filter_complexity(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises?complexity=hard",
         headers=auth_header(admin_token),
-    ).json()
+    ).json()["items"]
     assert {ex["complexity"] for ex in exercises} == {"hard"}
     test_delete_exercise(admin_token)
 
@@ -240,12 +242,12 @@ def test_filter_category(admin_token):
     exercises = client.get(
         "http://localhost:8000/exercises?category=cats",
         headers=auth_header(admin_token),
-    ).json()
+    ).json()["items"]
     assert {ex["id"] for ex in exercises} == {1, 3}
     exercises = client.get(
         "http://localhost:8000/exercises?category=something",
         headers=auth_header(admin_token),
-    ).json()
+    ).json()["items"]
     assert len(exercises) == 0
     test_delete_exercise(admin_token)
 
