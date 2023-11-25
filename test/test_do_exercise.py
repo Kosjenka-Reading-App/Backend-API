@@ -114,7 +114,7 @@ def test_read_all_exercises_with_completion(
     created_exercises[create_exercise()["id"]] = None
     exercises = [
         ex
-        for ex in good_request(client.get, "http://localhost:8000/exercises")
+        for ex in good_request(client.get, "http://localhost:8000/exercises")["items"]
         if ex["id"] in created_exercises.keys()
     ]
     for ex in exercises:
@@ -125,7 +125,7 @@ def test_read_all_exercises_with_completion(
             client.get,
             f"http://localhost:8000/exercises?user_id={id_alice}",
             headers=auth_header(regular_token),
-        )
+        )["items"]
         if ex["id"] in created_exercises.keys()
     ]
     for ex in exercises:
