@@ -37,6 +37,24 @@ def get_db():
         db.close()
 
 
+def assert_first_super_admin():
+    db = SessionLocal()
+    db_superadmin = (
+        db.query(models.Account)
+        .filter(models.Account.account_category == models.AccountType.Superadmin)
+        .first()
+    )
+    if db_superadmin is None:
+        account_db = models.Account(
+            email="superadmin@gmail.com",
+            account_category=models.AccountType.Superadmin,
+            password=crud.password_hasher("superadmin"),
+        )
+        db.add(account_db)
+        db.commit()
+        db.close()
+
+
 def validate_access_level(
     auth_user: schemas.AuthSchema, access_level: models.AccountType
 ):
@@ -468,4 +486,5 @@ def account_reset_password_result(
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 
+assert_first_super_admin()
 add_pagination(app)
