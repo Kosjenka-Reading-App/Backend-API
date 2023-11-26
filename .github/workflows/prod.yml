@@ -9,6 +9,16 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  PASSWORD_RESET_LINK: "127.0.0.1" 
+  JWT_VALID_TIME_ACCESS: 1200 
+  JWT_VALID_TIME_REFRESH: 604800
+  JWT_VALID_TIME_PWD_RESET: 600 
+  JWT_ALGORITHM: "HS256"
+  MAIL_USERNAME: "kosjenka.readingapp@gmail.com"
+  MAIL_PORT: 587
+  MAIL_SERVER: "smtp.gmail.com"
+  MAIL_FROM_NAME: "Kosjenka Support"
+  SUPERADMIN_LOGIN: "superadmin@gmail.com"
 
 jobs:
   deploy:
@@ -48,6 +58,7 @@ jobs:
           echo "MAIL_PORT=587" >> .env
           echo "MAIL_SERVER=smtp.gmail.com" >> .env
           echo "MAIL_FROM_NAME=Kosjenka Support" >> .env
+          echo "SUPERADMIN_PASSWORD=${{ secrets.PROD_SUPERADMIN_PASSWORD }}" >> .env
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
