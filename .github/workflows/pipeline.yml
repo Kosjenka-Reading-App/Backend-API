@@ -7,6 +7,20 @@ on:
 
 env:
   DATABASE_URL: "sqlite:///./db.sqlite"
+  PASSWORD_RESET_LINK: "127.0.0.1" 
+  JWT_VALID_TIME_ACCESS: 1200 
+  JWT_VALID_TIME_REFRESH: 604800
+  JWT_VALID_TIME_PWD_RESET: 600 
+  JWT_SECRET: "secret"
+  JWT_ALGORITHM: "HS256"
+  MAIL_USERNAME: "kosjenka.readingapp@gmail.com"
+  MAIL_PASSWORD: "secret"
+  MAIL_PORT: 587
+  MAIL_SERVER: "smtp.gmail.com"
+  MAIL_FROM_NAME: "Kosjenka Support"
+  SUPERADMIN_LOGIN: "superadmin@gmail.com"
+  SUPERADMIN_PASSWORD: "superadmin"
+
 
 jobs:
   tests:

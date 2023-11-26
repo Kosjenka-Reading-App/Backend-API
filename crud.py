@@ -1,5 +1,6 @@
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
+from fastapi_pagination.ext.sqlalchemy import paginate
 
 import models, schemas
 import bcrypt
@@ -19,34 +20,65 @@ account_order_by_column = {
 }
 
 
-def get_exercise(db: Session, exercise_id: int):
+def get_exercise(db: Session, exercise_id: int, user_id: int | None = None):
+    if user_id:
+        db_exercise = (
+            db.query(models.DoExercise)
+            .select_from(models.Exercise)
+            .join(models.Exercise.users)
+            .filter(models.Exercise.id == exercise_id)
+            .filter(models.DoExercise.user_id == user_id)
+            .add_entity(models.Exercise)
+            .first()
+        )
+        if db_exercise:
+            exercise_completion = schemas.ExerciseCompletion.model_validate(
+                db_exercise[0]
+            )
+            exercise = schemas.FullExerciseResponse.model_validate(db_exercise[1])
+            exercise.completion = exercise_completion
+            return exercise
     return db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
 
 
 def get_exercises(
     db: Session,
-    skip: int = 0,
-    limit: int = 100,
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
     category: models.Category | None = None,
     title_like: str | None = None,
+    user_id: int | None = None,
 ):
-    exercises = db.query(models.Exercise)
+    exercises = select(models.Exercise)
     if complexity:
         exercises = exercises.filter(models.Exercise.complexity == complexity)
     if category:
         exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+    if user_id:
+        exercises = (
+            exercises.join(models.DoExercise, isouter=True)
+            .add_columns(models.DoExercise)
+            .filter(or_(models.DoExercise.user_id == 1, models.Exercise.users == None))
+        )
     if order_by:
         exercises = exercises.order_by(
             exercise_order_by_column[order_by].desc()
             if order == schemas.Order.desc
             else exercise_order_by_column[order_by]
         )
-    return exercises.offset(skip).limit(limit).all()
+    if user_id:
+        ex_with_completion = []
+        for ex, do_ex in db.execute(exercises):
+            if do_ex:
+                ex_completion = schemas.ExerciseCompletion.model_validate(do_ex)
+                ex = schemas.FullExerciseResponse.model_validate(ex)
+                ex.completion = ex_completion
+            ex_with_completion.append(ex)
+        return ex_with_completion
+    return paginate(db, exercises)
 
 
 def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
@@ -68,6 +100,9 @@ def create_exercise(db: Session, exercise: schemas.ExerciseCreate):
 
 
 def delete_exercise(db: Session, exercise_id: int):
+    db.query(models.DoExercise).filter(
+        models.DoExercise.exercise_id == exercise_id
+    ).delete()
     db.delete(
         db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
     )
@@ -89,6 +124,32 @@ def update_exercise(db: Session, exercise_id: int, exercise: schemas.ExercisePat
     return stored_exercise
 
 
+def update_exercise_completion(
+    db: Session,
+    db_user: models.User,
+    db_exercise: models.Exercise,
+    completion: schemas.ExerciseCompletion,
+):
+    db_do_exercise = (
+        db.query(models.DoExercise)
+        .filter(models.DoExercise.exercise_id == db_exercise.id)
+        .filter(models.DoExercise.user_id == db_user.id_user)
+        .first()
+    )
+    if db_do_exercise is None:
+        db_do_exercise = models.DoExercise()
+        db.add(db_do_exercise)
+        db_user.exercises.append(db_do_exercise)
+        db_do_exercise.exercise = db_exercise
+    update_data = completion.model_dump(exclude_unset=True)
+    update_data.pop("user_id")
+    for key in update_data:
+        setattr(db_do_exercise, key, update_data[key])
+    db.commit()
+    db.refresh(db_do_exercise)
+    return db_do_exercise
+
+
 # Accounts
 def password_hasher(raw_password: str):
     salt = bcrypt.gensalt()
@@ -97,6 +158,12 @@ def password_hasher(raw_password: str):
 
 
 def get_account(db: Session, auth_user: schemas.AuthSchema, account_id: int):
+    if auth_user.account_id == account_id:
+        return (
+            db.query(models.Account)
+            .filter(models.Account.id_account == account_id)
+            .first()
+        )
     if models.AccountType(auth_user.account_category) == models.AccountType.Superadmin:
         return (
             db.query(models.Account)
@@ -104,12 +171,6 @@ def get_account(db: Session, auth_user: schemas.AuthSchema, account_id: int):
                 models.Account.id_account == account_id,
                 models.Account.account_category == models.AccountType.Admin,
             )
-            .first()
-        )
-    if auth_user.account_id == account_id:
-        return (
-            db.query(models.Account)
-            .filter(models.Account.id_account == account_id)
             .first()
         )
     return None
@@ -122,7 +183,7 @@ def delete_account(db: Session, account_id: int):
     db.commit()
 
 
-def update_account(db: Session, account_id: int, account: schemas.AccountOut):
+def update_account(db: Session, account_id: int, account: schemas.AccountPatch):
     stored_account = (
         db.query(models.Account).filter(models.Account.id_account == account_id).first()
     )
@@ -136,13 +197,11 @@ def update_account(db: Session, account_id: int, account: schemas.AccountOut):
 
 def get_accounts(
     db: Session,
-    skip: int = 0,
-    limit: int = 100,
     order_by: schemas.AccountOrderBy | None = None,
     order: schemas.Order | None = None,
     email_like: str | None = None,
 ):
-    accounts = db.query(models.Account).filter(
+    accounts = select(models.Account).filter(
         or_(
             models.Account.account_category == models.AccountType.Admin,
             models.Account.account_category == models.AccountType.Superadmin,
@@ -156,7 +215,7 @@ def get_accounts(
             if order == schemas.Order.desc
             else account_order_by_column[order_by]
         )
-    return accounts.offset(skip).limit(limit).all()
+    return paginate(db, accounts)
 
 
 def create_account(
@@ -180,18 +239,19 @@ def email_is_registered(db: Session, email: str):
 
 
 # Users
-def get_users(db: Session, account_id: int, skip: int = 0, limit: int = 100):
-    return (
-        db.query(models.User)
-        .filter(models.User.id_account == account_id)
-        .offset(skip)
-        .limit(limit)
-        .all()
+def get_users(db: Session, account_id: int):
+    return paginate(
+        db, select(models.User).filter(models.User.id_account == account_id)
     )
 
 
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id_user == user_id).first()
+def get_user(db: Session, user_id: int, account_id: int):
+    return (
+        db.query(models.User)
+        .filter(models.User.id_account == account_id)
+        .filter(models.User.id_user == user_id)
+        .first()
+    )
 
 
 def update_user(db: Session, user_id: int, user: schemas.UserPatch):
@@ -205,6 +265,7 @@ def update_user(db: Session, user_id: int, user: schemas.UserPatch):
 
 
 def delete_user(db: Session, user_id: int):
+    db.query(models.DoExercise).filter(models.DoExercise.user_id == user_id).delete()
     db.delete(db.query(models.User).filter(models.User.id_user == user_id).first())
     db.commit()
 
@@ -235,12 +296,10 @@ def _update_exercise_categories(
 
 def get_categories(
     db: Session,
-    skip: int,
-    limit: int,
     order: schemas.Order | None,
     name_like: str | None,
 ):
-    categories = db.query(models.Category)
+    categories = select(models.Category)
     if name_like:
         categories = categories.filter(models.Category.category.like(f"%{name_like}%"))
     if order:
@@ -249,8 +308,7 @@ def get_categories(
             if order == schemas.Order.desc
             else models.Category.category
         )
-    categories = categories.offset(skip).limit(limit).all()
-    return [cat.category for cat in categories]
+    return paginate(db, categories)
 
 
 def get_category(db: Session, category: str):

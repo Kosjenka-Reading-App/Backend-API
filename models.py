@@ -1,3 +1,4 @@
+from typing import Optional, List
 import enum
 
 from sqlalchemy import (
@@ -11,7 +12,7 @@ from sqlalchemy import (
     DateTime,
     func,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from database import Base
 
@@ -37,6 +38,17 @@ exercise_category = Table(
 )
 
 
+class DoExercise(Base):
+    __tablename__ = "do_exercise"
+    exercise_id = Column(Integer, ForeignKey("exercise.id"), primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id_user"), primary_key=True)
+    user = relationship("User", back_populates="exercises")
+    exercise = relationship("Exercise", back_populates="users")
+    completion = Column(Integer, nullable=True)
+    position = Column(Integer, nullable=True)
+    time_spent = Column(Integer, nullable=True)
+
+
 class Complexity(enum.Enum):
     _easy = "easy"
     _medium = "medium"
@@ -53,6 +65,7 @@ class Exercise(Base):
     category = relationship(
         "Category", secondary=exercise_category, back_populates="exercises"
     )
+    users = relationship("DoExercise", back_populates="exercise", lazy="dynamic")
     date = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
@@ -63,15 +76,18 @@ class Account(Base):
     email = Column(String, unique=True)
     password = Column(String)
     account_category = Column(Enum(AccountType))
+    users = relationship("User", back_populates="account")
 
 
 class User(Base):
     __tablename__ = "user"
 
     id_user = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    id_account = Column(Integer)
+    id_account = Column(Integer, ForeignKey("account.id_account"))
     username = Column(String)
     proficiency = Column(Float)
+    exercises = relationship("DoExercise", back_populates="user", lazy="dynamic")
+    account = relationship("Account", back_populates="users")
 
 
 class Category(Base):

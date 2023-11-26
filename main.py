@@ -1,6 +1,13 @@
+import os
+
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
+from fastapi_pagination import Page, add_pagination
+import fastapi_pagination
+from dotenv import load_dotenv
 
 import crud
 import models
@@ -11,6 +18,9 @@ from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
+templates = Jinja2Templates(directory="html_templates")
+
+load_dotenv()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +29,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+optional_auth = JWTBearer(auto_error=False)
 
 
 # Dependency
@@ -27,6 +38,32 @@ def get_db():
     try:
         yield db
     finally:
+        db.close()
+
+
+def assert_first_super_admin():
+    db = SessionLocal()
+    db_superadmin = (
+        db.query(models.Account)
+        .filter(models.Account.account_category == models.AccountType.Superadmin)
+        .first()
+    )
+    if db_superadmin is None:
+        login, password = (
+            os.environ["SUPERADMIN_LOGIN"],
+            os.environ["SUPERADMIN_PASSWORD"],
+        )
+        if not login or not password:
+            raise ValueError(
+                "SUPERADMIN_LOGIN and SUPERADMIN_PASSWORD must be set for the first superadmin"
+            )
+        account_db = models.Account(
+            email=login,
+            account_category=models.AccountType.Superadmin,
+            password=crud.password_hasher(password),
+        )
+        db.add(account_db)
+        db.commit()
         db.close()
 
 
@@ -42,12 +79,28 @@ def validate_access_level(
         )
 
 
+def validate_user_belongs_to_account(
+    user_id: int,
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+    db: Session = Depends(get_db),
+):
+    db_user = crud.get_user(db, user_id, auth_user.account_id)
+    if (
+        db_user is None
+        or schemas.UserSchema.model_validate(db_user).id_account != auth_user.account_id
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail=f"user with id {user_id} not found for this account",
+        )
+
+
 @app.get("/healthz", status_code=200)
 def health_check():
     return {"status": "ok"}
 
 
-@app.post("/exercises/", response_model=schemas.FullExerciseResponse)
+@app.post("/exercises", response_model=schemas.FullExerciseResponse)
 def create_exercise(
     exercise: schemas.ExerciseCreate,
     db: Session = Depends(get_db),
@@ -57,42 +110,59 @@ def create_exercise(
     return crud.create_exercise(db=db, exercise=exercise)
 
 
-@app.get("/exercises/", response_model=list[schemas.ExerciseResponse])
+@app.get("/exercises", response_model=Page[schemas.ExerciseResponse])
 def read_exercises(
-    skip: int = 0,
-    limit: int = 100,
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
     category: str | None = None,
     title_like: str | None = None,
+    user_id: int | None = None,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema | None = Depends(optional_auth),
 ):
+    if user_id:
+        if not auth_user:
+            raise HTTPException(
+                status_code=403, detail="account must be authorized to access user data"
+            )
+        validate_access_level(auth_user, models.AccountType.Regular)
+        validate_user_belongs_to_account(user_id, auth_user, db)
     if category:
         db_category = crud.get_category(db, category)
         if db_category is None:
-            return []
+            db_category = models.Category(category="NULL")
     else:
         db_category = None
     exercises = crud.get_exercises(
         db,
-        skip=skip,
-        limit=limit,
         order_by=order_by,
         order=order,
         complexity=complexity,
         category=db_category,
         title_like=title_like,
+        user_id=user_id,
     )
+    if user_id:
+        return fastapi_pagination.paginate(exercises)
     return exercises
 
 
 @app.get("/exercises/{exercise_id}", response_model=schemas.FullExerciseResponse)
 def read_exercise(
     exercise_id: int,
+    user_id: int | None = None,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema | None = Depends(optional_auth),
 ):
-    db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
+    if user_id:
+        if not auth_user:
+            raise HTTPException(
+                status_code=403, detail="account must be authorized to access user data"
+            )
+        validate_access_level(auth_user, models.AccountType.Regular)
+        validate_user_belongs_to_account(user_id, auth_user, db)
+    db_exercise = crud.get_exercise(db, exercise_id=exercise_id, user_id=user_id)
     if db_exercise is None:
         raise HTTPException(status_code=404, detail="exercise not found")
     return db_exercise
@@ -129,20 +199,44 @@ def update_exercise(
     return updated_exercise
 
 
-@app.post("/accounts/", response_model=schemas.AccountOut)
+@app.post("/exercises/{exercise_id}/track_completion")
+def track_exercise_completion(
+    exercise_id: int,
+    completion: schemas.ExerciseCompletion,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    validate_access_level(auth_user, models.AccountType.Regular)
+    validate_user_belongs_to_account(completion.user_id, auth_user, db)
+    db_user = crud.get_user(db, completion.user_id, auth_user.account_id)
+    db_exercise = crud.get_exercise(db, exercise_id=exercise_id)
+    if db_exercise is None:
+        raise HTTPException(status_code=404, detail="exercise not found")
+    db_do_exercise = crud.update_exercise_completion(
+        db, db_user, db_exercise, completion
+    )
+    return db_do_exercise
+
+
+@app.post("/accounts", response_model=schemas.AccountOut)
 def create_account(
-    account_in: schemas.AccountIn,
+    account_in: schemas.AccountPostAdmin,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     validate_access_level(auth_user, models.AccountType.Superadmin)
     if crud.email_is_registered(db, account_in.email):
         raise HTTPException(status_code=409, detail="Email already registered")
-    account_saved = crud.create_account(db, account_in, models.AccountType.Admin)
+
+    if account_in.is_superadmin:
+        type_account = models.AccountType.Superadmin
+    else:
+        type_account = models.AccountType.Admin
+    account_saved = crud.create_account(db, account_in, type_account)
     return account_saved
 
 
-@app.post("/register/", response_model=schemas.AccountOut)
+@app.post("/register", response_model=schemas.AccountOut)
 def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db)):
     if crud.email_is_registered(db, account_in.email):
         raise HTTPException(status_code=409, detail="Email already registered")
@@ -150,10 +244,8 @@ def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db
     return account_saved
 
 
-@app.get("/accounts/", response_model=list[schemas.AccountOut])
+@app.get("/accounts", response_model=Page[schemas.AccountOut])
 def get_all_accounts(
-    skip: int = 0,
-    limit: int = 100,
     order_by: schemas.AccountOrderBy | None = None,
     order: schemas.Order | None = None,
     email_like: str | None = None,
@@ -163,8 +255,6 @@ def get_all_accounts(
     validate_access_level(auth_user, models.AccountType.Superadmin)
     accounts = crud.get_accounts(
         db,
-        skip=skip,
-        limit=limit,
         order_by=order_by,
         order=order,
         email_like=email_like,
@@ -200,26 +290,26 @@ def delete_account(
 @app.patch("/accounts/{account_id}")
 def update_account(
     account_id: int,
-    account: schemas.AccountIn,
+    updated_data: schemas.AccountPatch,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     account = crud.get_account(db, auth_user=auth_user, account_id=account_id)
     if account is None:
         raise HTTPException(status_code=404, detail="account not found")
-    changed_account = crud.update_account(db, account_id=account_id, account=account)
+    changed_account = crud.update_account(
+        db, account_id=account_id, account=updated_data
+    )
     return changed_account
 
 
 # User
-@app.get("/users/", response_model=list[schemas.UserSchema])
+@app.get("/users", response_model=Page[schemas.UserSchema])
 def read_all_users(
-    skip: int = 0,
-    limit: int = 100,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    users = crud.get_users(db, account_id=auth_user.account_id, skip=skip, limit=limit)
+    users = crud.get_users(db, account_id=auth_user.account_id)
     return users
 
 
@@ -227,8 +317,9 @@ def read_all_users(
 def read_user(
     user_id: int,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id, account_id=auth_user.account_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
@@ -239,8 +330,9 @@ def update_user(
     user_id: int,
     user: schemas.UserPatch,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id, account_id=auth_user.account_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     db_user = crud.update_user(db, user_id=user_id, user=user)
@@ -251,15 +343,16 @@ def update_user(
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_user = crud.get_user(db, user_id=user_id)
+    db_user = crud.get_user(db, user_id=user_id, account_id=auth_user.account_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     crud.delete_user(db=db, user_id=user_id)
     return {"ok": True}
 
 
-@app.post("/users/", response_model=schemas.UserSchema)
+@app.post("/users", response_model=schemas.UserSchema)
 def create_user(
     user: schemas.UserCreate,
     db: Session = Depends(get_db),
@@ -269,29 +362,37 @@ def create_user(
 
 
 @app.post("/categories/{category}", response_model=schemas.Category)
-def create_category(category: str, db: Session = Depends(get_db)):
+def create_category(
+    category: str,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    validate_access_level(auth_user, models.AccountType.Admin)
     stored_category = crud.get_category(db, category=category)
     if stored_category is not None:
         raise HTTPException(status_code=404, detail="category already exists")
     return crud.create_category(db=db, category=category)
 
 
-@app.get("/categories/", response_model=list[str])
+@app.get("/categories", response_model=Page[schemas.Category])
 def read_categories(
-    skip: int = 0,
-    limit: int = 100,
     order: schemas.Order | None = None,
     name_like: str | None = None,
     db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
-    db_categories = crud.get_categories(
-        db, skip=skip, limit=limit, order=order, name_like=name_like
-    )
+    validate_access_level(auth_user, models.AccountType.Regular)
+    db_categories = crud.get_categories(db, order=order, name_like=name_like)
     return db_categories
 
 
 @app.delete("/categories/{category}")
-def delete_category(category: str, db: Session = Depends(get_db)):
+def delete_category(
+    category: str,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
+):
+    validate_access_level(auth_user, models.AccountType.Admin)
     db_category = crud.get_category(db, category=category)
     if db_category is None:
         raise HTTPException(status_code=404, detail="category not found")
@@ -301,8 +402,12 @@ def delete_category(category: str, db: Session = Depends(get_db)):
 
 @app.patch("/categories/{old_category}", response_model=schemas.Category)
 def update_category(
-    old_category: str, new_category: schemas.Category, db: Session = Depends(get_db)
+    old_category: str,
+    new_category: schemas.Category,
+    db: Session = Depends(get_db),
+    auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
+    validate_access_level(auth_user, models.AccountType.Admin)
     stored_category = crud.get_category(db, category=old_category)
     if stored_category is None:
         raise HTTPException(status_code=404, detail="category not found")
@@ -341,15 +446,50 @@ def me(
 ):
     validate_access_level(auth_user, models.AccountType.Regular)
     db_account = crud.get_account(db, auth_user, auth_user.account_id)
+    if db_account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
     return db_account
 
 
-# CreateSuperadmin just for Debugging
-@app.post("/createsuperadmin/", response_model=schemas.AccountOut)
-def createsuperadmin_only_for_debugging(
-    account_in: schemas.AccountIn, db: Session = Depends(get_db)
+# Password Reset
+@app.post("/password/forgot")
+async def send_password_mail(
+    forget_passwort_input: schemas.ForgetPasswordSchema,
+    db: Session = Depends(get_db),
 ):
-    if crud.email_is_registered(db, account_in.email):
-        raise HTTPException(status_code=409, detail="Email already registered")
-    account_saved = crud.create_account(db, account_in, models.AccountType.Superadmin)
-    return account_saved
+    account = auth.get_account_by_email(db=db, email=forget_passwort_input.email)
+    if account is None:
+        return {
+            "result": f"An email has been sent to {forget_passwort_input.email} with a link for password reset."
+        }
+        # raise HTTPException(status_code=404, detail=f"Email not found")
+    try:
+        await auth.send_password_reset_mail(account=account)
+        return {
+            "result": f"An email has been sent to {account.email} with a link for password reset."
+        }
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
+
+
+@app.post("/password/reset", response_model=schemas.ResetPasswordResultSchema)
+def account_reset_password_result(
+    input: schemas.ResetPasswordSchema,
+    db: Session = Depends(get_db),
+):
+    result = auth.reset_password(db, input.password, input.token)
+    if result == "SUCCESS":
+        result = schemas.ResetPasswordResultSchema
+        result.details = "Successfully updated password"
+        return result
+    elif result == "TOKEN_EXPIRED":
+        raise HTTPException(status_code=401, detail="Token is expired")
+    elif result == "EMAIL_NOT_FOUND":
+        raise HTTPException(status_code=404, detail="Email not found")
+    else:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+
+
+assert_first_super_admin()
+add_pagination(app)

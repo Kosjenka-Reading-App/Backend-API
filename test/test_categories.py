@@ -1,47 +1,69 @@
 import pytest
 
-from conftest import client
-from utils import auth_header
+from conftest import client, auth_header
 
 
 @pytest.mark.parametrize("category_name", ["Dogs", "Cats"])
-def test_create_category(category_name):
-    categories = client.get("http://localhost:8000/categories").json()
+def test_create_category(category_name, admin_token):
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(admin_token)
+    ).json()["items"]
     category_count = len(categories)
     created_category = client.post(
-        f"http://localhost:8000/categories/{category_name}"
+        f"http://localhost:8000/categories/{category_name}",
+        headers=auth_header(admin_token),
     ).json()
     assert created_category["category"] == category_name
-    categories = client.get("http://localhost:8000/categories").json()
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(admin_token)
+    ).json()["items"]
     assert len(categories) == category_count + 1
 
 
-def test_get_categories():
-    categories = client.get("http://localhost:8000/categories").json()
+def test_get_categories(regular_token):
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(regular_token)
+    ).json()["items"]
     assert type(categories) == list
-    assert type(categories[0]) == str
+    assert type(categories[0]) == dict
+    assert "category" in categories[0]
 
 
-def test_update_category():
-    categories = client.get("http://localhost:8000/categories").json()
-    original_category = categories[0]
+def test_update_category(admin_token):
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(admin_token)
+    ).json()["items"]
+    original_category = categories[0]["category"]
     body = {"category": "Mice"}
     updated_category = client.patch(
-        f"http://localhost:8000/categories/{original_category}", json=body
+        f"http://localhost:8000/categories/{original_category}",
+        json=body,
+        headers=auth_header(admin_token),
     ).json()
+    print(updated_category)
     assert updated_category["category"] == "Mice"
     assert (
-        original_category not in client.get("http://localhost:8000/categories").json()
+        original_category
+        not in client.get(
+            "http://localhost:8000/categories", headers=auth_header(admin_token)
+        ).json()["items"]
     )
 
 
-def test_delete_category():
-    categories = client.get("http://localhost:8000/categories").json()
+def test_delete_category(admin_token):
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(admin_token)
+    ).json()["items"]
     assert len(categories) > 0
     while categories:
         category = categories.pop()
-        client.delete(f"http://localhost:8000/categories/{category}").json()
-        remaining_categories = client.get("http://localhost:8000/categories").json()
+        client.delete(
+            f"http://localhost:8000/categories/{category['category']}",
+            headers=auth_header(admin_token),
+        ).json()
+        remaining_categories = client.get(
+            "http://localhost:8000/categories", headers=auth_header(admin_token)
+        ).json()["items"]
         assert len(remaining_categories) == len(categories)
         assert category not in remaining_categories
 
@@ -50,10 +72,14 @@ def test_create_exercise_with_category(admin_token):
     client.post(
         "http://localhost:8000/categories/cats", headers=auth_header(admin_token)
     )
-    categories = client.get("http://localhost:8000/categories/").json()
-    assert "cats" in categories
-    assert "dogs" not in categories
-    exercises = client.get("http://localhost:8000/exercises").json()
+    categories = client.get(
+        "http://localhost:8000/categories/", headers=auth_header(admin_token)
+    ).json()["items"]
+    assert {"category": "cats"} in categories
+    assert {"category": "dogs"} not in categories
+    exercises = client.get(
+        "http://localhost:8000/exercises", headers=auth_header(admin_token)
+    ).json()["items"]
     exercise_count = len(exercises)
     new_exercise = {
         "title": "Title of exercise about cats",
@@ -71,19 +97,28 @@ def test_create_exercise_with_category(admin_token):
             continue
         assert created_exercise[key] == new_exercise[key]
     assert created_exercise["complexity"] == None
-    exercises = client.get("http://localhost:8000/exercises").json()
+    exercises = client.get(
+        "http://localhost:8000/exercises", headers=auth_header(admin_token)
+    ).json()["items"]
     assert len(exercises) == exercise_count + 1
-    categories = client.get("http://localhost:8000/categories/").json()
-    assert set(categories) == {"cats", "dogs"}
+    categories = client.get(
+        "http://localhost:8000/categories/", headers=auth_header(admin_token)
+    ).json()["items"]
+    assert set(c["category"] for c in categories) == {"cats", "dogs"}
 
 
 def test_update_exercise_with_category(admin_token):
-    categories = client.get("http://localhost:8000/categories").json()
-    assert set(categories) == {"cats", "dogs"}
-    exercises = client.get("http://localhost:8000/exercises").json()
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(admin_token)
+    ).json()["items"]
+    assert set(c["category"] for c in categories) == {"cats", "dogs"}
+    exercises = client.get(
+        "http://localhost:8000/exercises", headers=auth_header(admin_token)
+    ).json()["items"]
     exercise_id = exercises[0]["id"]
     original_exercise = client.get(
-        f"http://localhost:8000/exercises/{exercise_id}"
+        f"http://localhost:8000/exercises/{exercise_id}",
+        headers=auth_header(admin_token),
     ).json()
     body = {"category": ["cats", "mice"]}
     client.patch(
@@ -92,7 +127,8 @@ def test_update_exercise_with_category(admin_token):
         headers=auth_header(admin_token),
     ).json()
     updated_exercise = client.get(
-        f"http://localhost:8000/exercises/{exercise_id}"
+        f"http://localhost:8000/exercises/{exercise_id}",
+        headers=auth_header(admin_token),
     ).json()
     for key in updated_exercise:
         if key == "category":
@@ -102,13 +138,17 @@ def test_update_exercise_with_category(admin_token):
             }
             continue
         assert updated_exercise[key] == original_exercise[key]
-    categories = client.get("http://localhost:8000/categories").json()
-    assert set(categories) == {"cats", "dogs", "mice"}
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(admin_token)
+    ).json()["items"]
+    assert set(c["category"] for c in categories) == {"cats", "dogs", "mice"}
 
 
 def test_rename_category(admin_token):
-    categories = client.get("http://localhost:8000/categories").json()
-    assert set(categories) == {"cats", "dogs", "mice"}
+    categories = client.get(
+        "http://localhost:8000/categories/", headers=auth_header(admin_token)
+    ).json()["items"]
+    assert set(c["category"] for c in categories) == {"cats", "dogs", "mice"}
     body = {"category": "one mouse"}
     updated_category = client.patch(
         "http://localhost:8000/categories/mice?",
@@ -116,25 +156,61 @@ def test_rename_category(admin_token):
         headers=auth_header(admin_token),
     ).json()
     assert updated_category["category"] == "one mouse"
-    categories = client.get("http://localhost:8000/categories").json()
-    assert set(categories) == {"cats", "dogs", "one mouse"}
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(admin_token)
+    ).json()["items"]
+    assert set(c["category"] for c in categories) == {"cats", "dogs", "one mouse"}
 
 
-def test_sort_categories():
-    categories = client.get("http://localhost:8000/categories").json()
-    print(categories)
+def test_sort_categories(regular_token):
+    categories = client.get(
+        "http://localhost:8000/categories", headers=auth_header(regular_token)
+    ).json()["items"]
     assert len(categories) > 0
-    assert client.get("http://localhost:8000/categories?order=asc").json() == sorted(
-        categories
-    )
-    assert (
-        client.get("http://localhost:8000/categories?order=desc").json()
-        == sorted(categories)[::-1]
-    )
+    assert [
+        c["category"]
+        for c in client.get(
+            "http://localhost:8000/categories?order=asc",
+            headers=auth_header(regular_token),
+        ).json()["items"]
+    ] == sorted([c["category"] for c in categories])
+    assert [
+        c["category"]
+        for c in client.get(
+            "http://localhost:8000/categories?order=desc",
+            headers=auth_header(regular_token),
+        ).json()["items"]
+    ] == sorted([c["category"] for c in categories])[::-1]
 
 
-def test_search_categories():
-    categories = client.get("http://localhost:8000/categories?name_like=use").json()
+def test_search_categories(regular_token):
+    categories = client.get(
+        "http://localhost:8000/categories?name_like=use",
+        headers=auth_header(regular_token),
+    ).json()["items"]
     assert len(categories) > 0
-    print(categories)
-    assert categories[0] == "one mouse"
+    assert categories[0] == {"category": "one mouse"}
+
+
+def test_delete_nonexistent_category(admin_token):
+    # Assume nonexistent_category doesn't exist
+    non_existent_category = "nonexistent_category"
+    resp = client.delete(
+        f"http://localhost:8000/categories/{non_existent_category}",
+        headers=auth_header(admin_token),
+    )
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "category not found"
+
+
+def test_patch_nonexistent_category(admin_token):
+    # Assume nonexistent_category doesn't exist
+    non_existent_category = {"category": "non_existent_category"}
+    body = {"category": "cats"}
+    resp = client.patch(
+        f"http://localhost:8000/categories/{non_existent_category}",
+        json=body,
+        headers=auth_header(admin_token),
+    )
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "category not found"

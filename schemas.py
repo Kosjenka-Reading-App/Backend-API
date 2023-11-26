@@ -7,6 +7,9 @@ from datetime import datetime
 import models
 
 
+BaseModel.model_config = {"from_attributes": True}
+
+
 class ExerciseOrderBy(Enum):
     category = "category"
     complexity = "complexity"
@@ -33,10 +36,18 @@ class Category(BaseModel):
     category: str
 
 
+class ExerciseCompletion(BaseModel):
+    user_id: int
+    completion: Optional[int] = None
+    position: Optional[int] = None
+    time_spent: Optional[int] = None
+
+
 class ExerciseResponse(BaseModel):
     id: int
     title: str
     complexity: models.Complexity | None
+    completion: ExerciseCompletion | None = None
     category: List[Category]
     date: datetime
 
@@ -60,9 +71,18 @@ class FullExerciseResponse(ExerciseResponse):
     # date:datetime
 
 
+class AccountPatch(BaseModel):
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
+
 class AccountIn(BaseModel):
     email: EmailStr
     password: str
+
+
+class AccountPostAdmin(AccountIn):
+    is_superadmin: Optional[bool] = False
 
 
 class AccountOut(BaseModel):
@@ -113,3 +133,17 @@ class RefreshSchema(BaseModel):
 class MeSchema(BaseModel):
     account_id: int
     account_category: str
+
+
+# Forget Password
+class ForgetPasswordSchema(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordSchema(BaseModel):
+    password: str
+    token: str
+
+
+class ResetPasswordResultSchema(BaseModel):
+    details: str
