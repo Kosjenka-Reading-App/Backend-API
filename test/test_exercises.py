@@ -1,7 +1,6 @@
 from datetime import datetime
 import time
 
-from fastapi_pagination import add_pagination
 from conftest import client, auth_header
 
 

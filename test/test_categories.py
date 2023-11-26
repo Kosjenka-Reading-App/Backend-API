@@ -190,3 +190,27 @@ def test_search_categories(regular_token):
     ).json()["items"]
     assert len(categories) > 0
     assert categories[0] == {"category": "one mouse"}
+
+
+def test_delete_nonexistent_category(admin_token):
+    # Assume nonexistent_category doesn't exist
+    non_existent_category = "nonexistent_category"
+    resp = client.delete(
+        f"http://localhost:8000/categories/{non_existent_category}",
+        headers=auth_header(admin_token),
+    )
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "category not found"
+
+
+def test_patch_nonexistent_category(admin_token):
+    # Assume nonexistent_category doesn't exist
+    non_existent_category = {"category": "non_existent_category"}
+    body = {"category": "cats"}
+    resp = client.patch(
+        f"http://localhost:8000/categories/{non_existent_category}",
+        json=body,
+        headers=auth_header(admin_token),
+    )
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "category not found"

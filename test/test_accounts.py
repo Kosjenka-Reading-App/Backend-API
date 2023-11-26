@@ -131,6 +131,7 @@ def test_me_for_deleted_account():
         "password": "secret",
     }
     good_request(client.post, "http://localhost:8000/register", json=new_account)
+    bad_request(client.post, 409, "http://localhost:8000/register", json=new_account)
     login_resp = good_request(
         client.post, "http://localhost:8000/login", json=new_account
     )
@@ -142,3 +143,61 @@ def test_me_for_deleted_account():
         headers=auth_header,
     )
     bad_request(client.get, 404, "http://localhost:8000/me", headers=auth_header)
+
+
+def test_delete_nonexistent_user(regular_token):
+    # Assuming user_id 99999 does not exist
+    user_id_to_delete = 99999
+    # Try to delete a user that doesn't exist
+    resp = client.delete(
+        f"http://localhost:8000/users/{user_id_to_delete}",
+        headers=auth_header(regular_token),
+    )
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "User not found"
+
+
+def test_create_error_account(superadmin_token):
+    # Get the initial count of accounts
+    accounts_before = client.get(
+        "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
+    ).json()
+    account_count_before = len(accounts_before)
+
+    # Try creating an account with invalid data
+    invalid_account = {"email": "invalid_email", "password": "password1234"}
+    resp = client.post(
+        "http://localhost:8000/accounts",
+        json=invalid_account,
+        headers=auth_header(superadmin_token),
+    )
+    assert resp.status_code == 422  # Expecting a validation error
+
+    # Ensure that the count of accounts remains the same
+    accounts_after = client.get(
+        "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
+    ).json()
+    account_count_after = len(accounts_after)
+    assert account_count_after == account_count_before
+
+
+def test_update_account_invalid_email(superadmin_token):
+    # Try updating an account with invalid data
+    invalid_data = {"email": "invalid_email"}
+    resp = client.patch(
+        "http://localhost:8000/accounts/1",  # superadmin is ID 1
+        json=invalid_data,
+        headers=auth_header(superadmin_token),
+    )
+    assert resp.status_code == 422  # Expecting a validation error
+
+
+def test_update_account_invalid_email(superadmin_token):
+    # Try updating a non-existent account
+    non_existent_account_id = 999999  # Assuming this ID doesn't exist
+    resp = client.patch(
+        f"http://localhost:8000/accounts/{non_existent_account_id}",
+        json={"email": "new_email@gmail.com"},
+        headers=auth_header(superadmin_token),
+    )
+    assert resp.status_code == 404  # Expecting a not found error

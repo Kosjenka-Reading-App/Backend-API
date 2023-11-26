@@ -95,13 +95,6 @@ def validate_user_belongs_to_account(
         )
 
 
-async def redirect_trailing_slash(request, call_next):
-    if request.url.path.endswith("/"):
-        url_without_trailing_slash = str(request.url)[:-1]
-        return RedirectResponse(url=url_without_trailing_slash, status_code=301)
-    return await call_next(request)
-
-
 @app.get("/healthz", status_code=200)
 def health_check():
     return {"status": "ok"}
