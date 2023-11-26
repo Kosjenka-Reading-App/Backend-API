@@ -48,7 +48,7 @@ jobs:
           echo "MAIL_FROM_NAME=Kosjenka Support" >> .env
           echo "SUPERADMIN_LOGIN=superadmin@gmail.com" >> .env
           echo "SUPERADMIN_PASSWORD={{ secrets.DEV_SUPERADMIN_PASSWORD }}" >> .env
-          echo "PASSWORD_RESET_LINK=https://admin-kosjenka-dev.vercel.app/password/reset" >> .env
+          echo "PASSWORD_RESET_LINK=https://admin-kosjenka-dev.vercel.app/password/confirm" >> .env
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
