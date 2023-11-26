@@ -49,7 +49,6 @@ jobs:
           echo "DATABASE_URL=${{ secrets.PROD_DATABASE_URL }}" >> .env
           echo "JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}" >> .env
           echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env
-          echo "PASSWORD_RESET_LINK=127.0.0.1" >> .env
           echo "JWT_VALID_TIME_ACCESS=1200" >> .env
           echo "JWT_VALID_TIME_REFRESH=604800" >> .env
           echo "JWT_VALID_TIME_PWD_RESET=600" >> .env
