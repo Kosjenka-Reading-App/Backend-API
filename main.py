@@ -436,7 +436,10 @@ async def send_password_mail(
 ):
     account = auth.get_account_by_email(db=db, email=forget_passwort_input.email)
     if account is None:
-        raise HTTPException(status_code=404, detail=f"Email not found")
+        return {
+            "result": f"An email has been sent to {forget_passwort_input.email} with a link for password reset."
+        }
+        #raise HTTPException(status_code=404, detail=f"Email not found")
     try:
         await auth.send_password_reset_mail(account=account)
         return {
