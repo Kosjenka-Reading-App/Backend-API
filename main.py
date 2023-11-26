@@ -1,3 +1,5 @@
+import os
+
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi_pagination import Page, add_pagination
 import fastapi_pagination
+from dotenv import load_dotenv
 
 import crud
 import models
@@ -17,6 +20,7 @@ models.Base.metadata.create_all(bind=engine)
 
 templates = Jinja2Templates(directory="html_templates")
 
+load_dotenv()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -45,10 +49,18 @@ def assert_first_super_admin():
         .first()
     )
     if db_superadmin is None:
+        login, password = (
+            os.environ["SUPERADMIN_LOGIN"],
+            os.environ["SUPERADMIN_PASSWORD"],
+        )
+        if not login or not password:
+            raise ValueError(
+                "SUPERADMIN_LOGIN and SUPERADMIN_PASSWORD must be set for the first superadmin"
+            )
         account_db = models.Account(
-            email="superadmin@gmail.com",
+            email=login,
             account_category=models.AccountType.Superadmin,
-            password=crud.password_hasher("superadmin"),
+            password=crud.password_hasher(password),
         )
         db.add(account_db)
         db.commit()
