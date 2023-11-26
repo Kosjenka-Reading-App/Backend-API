@@ -1,3 +1,5 @@
+import os
+
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi_pagination import Page, add_pagination
 import fastapi_pagination
+from dotenv import load_dotenv
 
 import crud
 import models
@@ -17,6 +20,7 @@ models.Base.metadata.create_all(bind=engine)
 
 templates = Jinja2Templates(directory="html_templates")
 
+load_dotenv()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -34,6 +38,32 @@ def get_db():
     try:
         yield db
     finally:
+        db.close()
+
+
+def assert_first_super_admin():
+    db = SessionLocal()
+    db_superadmin = (
+        db.query(models.Account)
+        .filter(models.Account.account_category == models.AccountType.Superadmin)
+        .first()
+    )
+    if db_superadmin is None:
+        login, password = (
+            os.environ["SUPERADMIN_LOGIN"],
+            os.environ["SUPERADMIN_PASSWORD"],
+        )
+        if not login or not password:
+            raise ValueError(
+                "SUPERADMIN_LOGIN and SUPERADMIN_PASSWORD must be set for the first superadmin"
+            )
+        account_db = models.Account(
+            email=login,
+            account_category=models.AccountType.Superadmin,
+            password=crud.password_hasher(password),
+        )
+        db.add(account_db)
+        db.commit()
         db.close()
 
 
@@ -429,7 +459,10 @@ async def send_password_mail(
 ):
     account = auth.get_account_by_email(db=db, email=forget_passwort_input.email)
     if account is None:
-        raise HTTPException(status_code=404, detail=f"Email not found")
+        return {
+            "result": f"An email has been sent to {forget_passwort_input.email} with a link for password reset."
+        }
+        # raise HTTPException(status_code=404, detail=f"Email not found")
     try:
         await auth.send_password_reset_mail(account=account)
         return {
@@ -458,4 +491,5 @@ def account_reset_password_result(
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 
+assert_first_super_admin()
 add_pagination(app)

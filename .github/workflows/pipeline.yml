@@ -18,6 +18,8 @@ env:
   MAIL_PORT: 587
   MAIL_SERVER: "smtp.gmail.com"
   MAIL_FROM_NAME: "Kosjenka Support"
+  SUPERADMIN_LOGIN: "superadmin@gmail.com"
+  SUPERADMIN_PASSWORD: "superadmin"
 
 
 jobs:
