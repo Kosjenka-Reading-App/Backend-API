@@ -39,7 +39,11 @@ def get_db():
 
 def assert_first_super_admin():
     db = SessionLocal()
-    db_superadmin = db.query(models.Account).filter(models.Account.account_category == models.AccountType.Superadmin).first()
+    db_superadmin = (
+        db.query(models.Account)
+        .filter(models.Account.account_category == models.AccountType.Superadmin)
+        .first()
+    )
     if db_superadmin is None:
         account_db = models.Account(
             email="superadmin@gmail.com",
