@@ -1,6 +1,4 @@
-import pytest
-
-from conftest import client, auth_header
+from conftest import client
 
 
 def test_refresh(superadmin_token):

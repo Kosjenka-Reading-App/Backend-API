@@ -1,5 +1,3 @@
-from datetime import datetime
-import time
 from conftest import client, auth_header
 
 
