@@ -2,7 +2,9 @@ import pytest
 from conftest import client, auth_header
 
 
-@pytest.mark.skip(reason="we have to call function in auth.py to reset password directly")
+@pytest.mark.skip(
+    reason="we have to call function in auth.py to reset password directly"
+)
 def test_send_password_mail_superadmin():
     email = {"email": "superadmin@gmail.com"}
     resp = client.post(
@@ -16,7 +18,9 @@ def test_send_password_mail_superadmin():
     )
 
 
-@pytest.mark.skip(reason="we have to call function in auth.py to reset password directly")
+@pytest.mark.skip(
+    reason="we have to call function in auth.py to reset password directly"
+)
 def test_send_password_mail_user():
     email = {"email": "regular@gmail.com"}
     resp = client.post(
@@ -31,7 +35,9 @@ def test_send_password_mail_user():
     )
 
 
-@pytest.mark.skip(reason="we have to call function in auth.py to reset password directly")
+@pytest.mark.skip(
+    reason="we have to call function in auth.py to reset password directly"
+)
 def test_account_reset_password():
     email = {"email": "regular@gmail.com"}
     resp = client.post("http://localhost:8000/password/forget", json=email)
