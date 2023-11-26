@@ -58,6 +58,7 @@ jobs:
           echo "MAIL_PORT=587" >> .env
           echo "MAIL_SERVER=smtp.gmail.com" >> .env
           echo "MAIL_FROM_NAME=Kosjenka Support" >> .env
+          echo "SUPERADMIN_LOGIN=superadmin@gmail.com" >> .env
           echo "SUPERADMIN_PASSWORD=${{ secrets.PROD_SUPERADMIN_PASSWORD }}" >> .env
 
       - name: Build and push Docker image
