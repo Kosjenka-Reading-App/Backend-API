@@ -66,8 +66,8 @@ def get_exercises(
         )
     if order_by:
         if order_by == schemas.ExerciseOrderBy.completion:
-            exercises_query = db.query(models.Exercise)
-            exercises_query = exercises_query.order_by(
+            exercises_query = select(models.Exercise).join(models.DoExercise).filter(models.Exercise.id == models.DoExercise.exercise_id).filter(models.DoExercise.user_id==user_id)
+            exercises = exercises_query.order_by(
                 exercise_order_by_column[order_by].desc() if order == schemas.Order.desc else exercise_order_by_column[order_by]
             )
         else:
