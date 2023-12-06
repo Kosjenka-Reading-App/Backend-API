@@ -11,6 +11,7 @@ exercise_order_by_column = {
     schemas.ExerciseOrderBy.complexity: models.Exercise.complexity,
     schemas.ExerciseOrderBy.title: models.Exercise.title,
     schemas.ExerciseOrderBy.date: models.Exercise.date,
+    schemas.ExerciseOrderBy.completion: models.DoExercise.completion,
 }
 
 
@@ -40,7 +41,7 @@ def get_exercise(db: Session, exercise_id: int, user_id: int | None = None):
             return exercise
     return db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
 
-
+from sqlalchemy import func
 def get_exercises(
     db: Session,
     order_by: schemas.ExerciseOrderBy | None = None,
@@ -64,11 +65,17 @@ def get_exercises(
             .filter(or_(models.DoExercise.user_id == 1, models.Exercise.users == None))
         )
     if order_by:
-        exercises = exercises.order_by(
-            exercise_order_by_column[order_by].desc()
-            if order == schemas.Order.desc
-            else exercise_order_by_column[order_by]
-        )
+        if order_by == schemas.ExerciseOrderBy.completion:
+            exercises_query = db.query(models.Exercise)
+            exercises_query = exercises_query.order_by(
+                exercise_order_by_column[order_by].desc() if order == schemas.Order.desc else exercise_order_by_column[order_by]
+            )
+        else:
+            exercises = exercises.order_by(
+                exercise_order_by_column[order_by].desc()
+                if order == schemas.Order.desc
+                else exercise_order_by_column[order_by]
+            )
     if user_id:
         ex_with_completion = []
         for ex, do_ex in db.execute(exercises):
