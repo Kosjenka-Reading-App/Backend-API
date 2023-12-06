@@ -149,7 +149,9 @@ def test_read_exercises_of_other_account_user(create_account, create_exercise):
 
 def test_sort_completion(regular_token, create_user, create_exercise):
     created_user_id = create_user(regular_token)["id_user"]
-    exercise_id = create_exercise()["id"]
+    exercise_id1 = create_exercise()["id"]
+    exercise_id2 = create_exercise()["id"]
+    exercise_id3 = create_exercise()["id"]
 
     exercise_completion1 = {
         "user_id": created_user_id,
@@ -171,32 +173,36 @@ def test_sort_completion(regular_token, create_user, create_exercise):
     }
     good_request(
         client.post,
-        f"http://localhost:8000/exercises/{exercise_id}/track_completion",
+        f"http://localhost:8000/exercises/{exercise_id1}/track_completion",
         json=exercise_completion1,
         headers=auth_header(regular_token),
     )
     good_request(
         client.post,
-        f"http://localhost:8000/exercises/{exercise_id}/track_completion",
+        f"http://localhost:8000/exercises/{exercise_id2}/track_completion",
         json=exercise_completion2,
         headers=auth_header(regular_token),
     )
     good_request(
         client.post,
-        f"http://localhost:8000/exercises/{exercise_id}/track_completion",
+        f"http://localhost:8000/exercises/{exercise_id3}/track_completion",
         json=exercise_completion3,
         headers=auth_header(regular_token),
     )
     # check the order
-    exercises = client.get(
-        "http://localhost:8000/exercises?order_by=completion",
-        headers=auth_header(regular_token),
-    ).json()["items"]
-    completions = [exercise["completion"]for exercise in exercises]
+    exercises = [
+        ex
+        for ex in good_request(
+            client.get,
+            f"http://localhost:8000/exercises?user_id={created_user_id}&order_by=completion",
+            headers=auth_header(regular_token),
+        )["items"]
+    ]
+    completions = [exercise["completion"]["completion"] for exercise in exercises if exercise["completion"] is not None]
     assert completions == sorted(completions)
     exercises = client.get(
-        "http://localhost:8000/exercises?order_by=completion&order=desc",
+        "http://localhost:8000/exercises?user_id={created_user_id}&order_by=completion&order=desc",
         headers=auth_header(regular_token),
-    ).json()["items"]
-    completions = [exercise["completion"] for exercise in exercises]
+    ).json()
+    completions = [exercise["completion"]["completion"] for exercise in exercises if exercise["completion"] is not None]
     assert completions == sorted(completions)[::-1]
