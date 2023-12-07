@@ -123,7 +123,7 @@ def test_read_all_exercises_with_completion(
         ex
         for ex in good_request(
             client.get,
-            f"http://localhost:8000/exercises?user_id={id_alice}&order_by=completion",
+            f"http://localhost:8000/exercises?user_id={id_alice}",
             headers=auth_header(regular_token),
         )["items"]
         if ex["id"] in created_exercises.keys()
