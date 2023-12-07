@@ -41,7 +41,6 @@ def get_exercise(db: Session, exercise_id: int, user_id: int | None = None):
             return exercise
     return db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
 
-from sqlalchemy import func
 def get_exercises(
     db: Session,
     order_by: schemas.ExerciseOrderBy | None = None,
@@ -52,31 +51,35 @@ def get_exercises(
     user_id: int | None = None,
 ):
     exercises = select(models.Exercise)
+    # first, filter the exercises by complexity, category and title
     if complexity:
         exercises = exercises.filter(models.Exercise.complexity == complexity)
     if category:
         exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
-    if user_id:
-        exercises = (
-            exercises.join(models.DoExercise, isouter=True)
-            .add_columns(models.DoExercise)
-            .filter(or_(models.DoExercise.user_id == 1, models.Exercise.users == None))
-        )
+    # then, sort the exercises    
     if order_by:
+        # sort by completion (completion is in DoExercise table)
         if order_by == schemas.ExerciseOrderBy.completion:
-            exercises_query = select(models.Exercise).join(models.DoExercise).filter(models.Exercise.id == models.DoExercise.exercise_id).filter(models.DoExercise.user_id==user_id)
-            exercises = exercises_query.order_by(
+            exercises = select(models.Exercise).join(models.DoExercise).filter(models.DoExercise.user_id==user_id)
+            exercises = exercises.order_by(
                 exercise_order_by_column[order_by].desc() if order == schemas.Order.desc else exercise_order_by_column[order_by]
             )
+        # sort with elements in exercise's table
         else:
             exercises = exercises.order_by(
                 exercise_order_by_column[order_by].desc()
                 if order == schemas.Order.desc
                 else exercise_order_by_column[order_by]
             )
+        print(exercises)
+    # if the id of a user is given then add the completion of the specific user
     if user_id:
+        exercises = (
+            exercises.add_columns(models.DoExercise)
+        )
+        print(exercises)
         ex_with_completion = []
         for ex, do_ex in db.execute(exercises):
             if do_ex:
@@ -84,6 +87,8 @@ def get_exercises(
                 ex = schemas.FullExerciseResponse.model_validate(ex)
                 ex.completion = ex_completion
             ex_with_completion.append(ex)
+        for ex in ex_with_completion:
+            print(ex.completion)
         return ex_with_completion
     return paginate(db, exercises)
 
