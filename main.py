@@ -224,9 +224,9 @@ def track_exercise_completion(
     return db_do_exercise
 
 
-@app.post("/accounts", response_model=schemas.AccountOut)
-def create_account(
-    account_in: schemas.AccountPostAdmin,
+@app.post("/accounts")
+async def create_account(
+    account_in: schemas.AccountPostAdminIn,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
@@ -238,8 +238,22 @@ def create_account(
         type_account = models.AccountType.Superadmin
     else:
         type_account = models.AccountType.Admin
-    account_saved = crud.create_account(db, account_in, type_account)
-    return account_saved
+        
+    #Set a placeholder first, check in login if the placeholder is still there
+    account = schemas.AccountIn
+    account.email = account_in.email
+    account.password = "TO_BE_SET"
+    
+    account_saved = crud.create_account(db, account, type_account)
+    try:
+        await auth.send_account_password_mail(account=account_saved)
+        return {
+            "result": f"An email has been sent to {account_saved.email} with a link for setting a password."
+        }
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
+
 
 
 @app.post("/register", response_model=schemas.AccountOut)
@@ -433,7 +447,9 @@ def update_category(
 def login(login: schemas.LoginSchema, db: Session = Depends(get_db)):
     auth_account = auth.get_user(db=db, login=login)
     if auth_account is None:
-        raise HTTPException(status_code=400, detail="Username/Password wrong")
+        raise HTTPException(status_code=400, detail="Username/Password wrong")    
+    if auth_account == "NOT_ACTIVE":
+        raise HTTPException(status_code=400, detail="Account not activated")
     token = auth.generateToken(account=auth_account)
     return token
 
@@ -484,6 +500,7 @@ async def send_password_mail(
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
 
 
+@app.post("/accounts/activate", response_model=schemas.ResetPasswordResultSchema)
 @app.post("/password/reset", response_model=schemas.ResetPasswordResultSchema)
 def account_reset_password_result(
     input: schemas.ResetPasswordSchema,
