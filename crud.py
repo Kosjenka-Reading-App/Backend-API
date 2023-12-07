@@ -82,10 +82,10 @@ def get_exercises(
             )
     # if the id of a user is given then add the completion of the specific user
     if user_id:
-        exercises = exercises.add_columns(models.DoExercise).filter(
-            models.DoExercise.user_id == user_id
-        ).filter(
-            models.DoExercise.exercise_id == models.Exercise.id
+        exercises = (
+            exercises.add_columns(models.DoExercise)
+            .filter(models.DoExercise.user_id == user_id)
+            .filter(models.DoExercise.exercise_id == models.Exercise.id)
         )
         print(exercises)
         ex_with_completion = []
