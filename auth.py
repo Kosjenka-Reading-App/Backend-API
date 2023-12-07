@@ -68,6 +68,8 @@ def get_user(db: Session, login: schemas.LoginSchema):
     user = db.query(models.Account).filter(models.Account.email == login.email).first()
     if user == None:
         return None
+    if user.password == "TO_BE_SET":
+        return "NOT_ACTIVE"
     if not bcrypt.checkpw(
         login.password.encode("utf-8"), user.password.encode("utf-8")
     ):
@@ -154,3 +156,23 @@ def reset_password(db: Session, new_password: str, token: str):
         return "SUCCESS"
     except:
         return "ERROR"
+
+# Admin Password set
+async def send_account_password_mail(account: models.Account):
+    token = createPasswortResetToken(
+        email=account.email, valid_time=JWT_VALID_TIME_PWD_RESET
+    )
+    link_base = os.environ["ACTIVATE_ACCOUNT_LINK"]
+    template_body = {
+        "user": account.email,
+        "url": f"{link_base}?token={token}",
+        "expire_in_minutes": int(JWT_VALID_TIME_PWD_RESET / 60),
+    }
+    message = MessageSchema(
+        subject="Kosjenka - Account Registration",
+        recipients=[account.email],
+        template_body=template_body,
+        subtype=MessageType.html,
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message, template_name="activate_account_email.html")
