@@ -73,13 +73,11 @@ def get_exercises(
                 if order == schemas.Order.desc
                 else exercise_order_by_column[order_by]
             )
-        print(exercises)
     # if the id of a user is given then add the completion of the specific user
     if user_id:
         exercises = (
-            exercises.add_columns(models.DoExercise)
+            exercises.add_columns(models.DoExercise).filter(models.DoExercise.user_id==user_id)
         )
-        print(exercises)
         ex_with_completion = []
         for ex, do_ex in db.execute(exercises):
             if do_ex:
@@ -87,8 +85,6 @@ def get_exercises(
                 ex = schemas.FullExerciseResponse.model_validate(ex)
                 ex.completion = ex_completion
             ex_with_completion.append(ex)
-        for ex in ex_with_completion:
-            print(ex.completion)
         return ex_with_completion
     return paginate(db, exercises)
 
