@@ -84,7 +84,10 @@ def get_exercises(
     if user_id:
         exercises = exercises.add_columns(models.DoExercise).filter(
             models.DoExercise.user_id == user_id
+        ).filter(
+            models.DoExercise.exercise_id == models.Exercise.id
         )
+        print(exercises)
         ex_with_completion = []
         for ex, do_ex in db.execute(exercises):
             if do_ex:
