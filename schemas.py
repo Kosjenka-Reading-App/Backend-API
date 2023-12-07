@@ -15,6 +15,7 @@ class ExerciseOrderBy(Enum):
     complexity = "complexity"
     title = "title"
     date = "date"
+    completion = "completion"
 
 
 class ExerciseFilterBy(Enum):
