@@ -41,6 +41,7 @@ def get_exercise(db: Session, exercise_id: int, user_id: int | None = None):
             return exercise
     return db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
 
+
 def get_exercises(
     db: Session,
     order_by: schemas.ExerciseOrderBy | None = None,
@@ -58,13 +59,19 @@ def get_exercises(
         exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
-    # then, sort the exercises    
+    # then, sort the exercises
     if order_by:
         # sort by completion (completion is in DoExercise table)
         if order_by == schemas.ExerciseOrderBy.completion:
-            exercises = select(models.Exercise).join(models.DoExercise).filter(models.DoExercise.user_id==user_id)
+            exercises = (
+                select(models.Exercise)
+                .join(models.DoExercise)
+                .filter(models.DoExercise.user_id == user_id)
+            )
             exercises = exercises.order_by(
-                exercise_order_by_column[order_by].desc() if order == schemas.Order.desc else exercise_order_by_column[order_by]
+                exercise_order_by_column[order_by].desc()
+                if order == schemas.Order.desc
+                else exercise_order_by_column[order_by]
             )
         # sort with elements in exercise's table
         else:
@@ -75,8 +82,8 @@ def get_exercises(
             )
     # if the id of a user is given then add the completion of the specific user
     if user_id:
-        exercises = (
-            exercises.add_columns(models.DoExercise).filter(models.DoExercise.user_id==user_id)
+        exercises = exercises.add_columns(models.DoExercise).filter(
+            models.DoExercise.user_id == user_id
         )
         ex_with_completion = []
         for ex, do_ex in db.execute(exercises):
