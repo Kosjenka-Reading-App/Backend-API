@@ -129,17 +129,21 @@ def read_exercises(
         validate_access_level(auth_user, models.AccountType.Regular)
         validate_user_belongs_to_account(user_id, auth_user, db)
     if category:
-        db_category = crud.get_category(db, category)
-        if db_category is None:
-            db_category = models.Category(category="NULL")
+        categories = category.split('_AND_')
+        db_categories = []
+        for category in categories:
+            db_cat = crud.get_category(db, category)
+            if db_cat is None:
+                db_cat = models.Category(category="NULL")
+            db_categories.append(db_cat)
     else:
-        db_category = None
+        db_categories = None
     exercises = crud.get_exercises(
         db,
         order_by=order_by,
         order=order,
         complexity=complexity,
-        category=db_category,
+        categories=db_categories,
         title_like=title_like,
         user_id=user_id,
     )
