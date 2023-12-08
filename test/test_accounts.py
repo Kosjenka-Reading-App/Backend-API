@@ -1,5 +1,6 @@
 from conftest import client, auth_header, good_request, bad_request
 
+from auth import createPasswortResetToken
 
 def test_create_account(superadmin_token):
     accounts = client.get(
@@ -18,6 +19,27 @@ def test_create_account(superadmin_token):
     ).json()
     assert len(accounts["items"]) == account_count + 1
 
+def test_activate_account():
+    account = {"email": "email@gmail.com", "password": "secret"}
+    resp = client.post(
+        "http://localhost:8000/login",
+        json=account
+    )
+    #Check if login is not possible
+    token = createPasswortResetToken("email@gmail.com",6000)
+    activate = {"token": token, "password": "secret", }
+    assert resp.status_code == 400
+    resp2 = client.post(
+        "http://localhost:8000/accounts/activate",
+        json=activate
+    )
+    assert resp2.status_code == 200
+    #Try to login again 
+    resp3 = client.post(
+        "http://localhost:8000/login",
+        json=account
+    )
+    assert resp3.status_code == 200
 
 def test_update_account(superadmin_token):
     # Get the superadmin
