@@ -41,6 +41,7 @@ jobs:
           echo "JWT_VALID_TIME_ACCESS=1200" >> .env
           echo "JWT_VALID_TIME_REFRESH=604800" >> .env
           echo "JWT_VALID_TIME_PWD_RESET=600" >> .env
+          echo "JWT_VALID_TIME_ACTIVATE_ACCOUNT=1800" >> .env
           echo "JWT_ALGORITHM=HS256" >> .env
           echo "MAIL_USERNAME=kosjenka.readingapp@gmail.com" >> .env
           echo "MAIL_PORT=587" >> .env
