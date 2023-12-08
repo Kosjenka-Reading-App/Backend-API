@@ -21,7 +21,6 @@ def test_send_password_mail_user():
         "http://localhost:8000/password/forgot",
         json=email,
     )
-    print(resp.json())
     assert resp.status_code == 200
     assert (
         "An email has been sent to regular@gmail.com with a link for password reset."
@@ -34,7 +33,7 @@ def test_send_password_mail_user():
 )
 def test_account_reset_password():
     email = {"email": "regular@gmail.com"}
-    resp = client.post("http://localhost:8000/password/forget", json=email)
+    resp = client.post("http://localhost:8000/password/forgot", json=email)
     assert resp.status_code == 200
     reset_request_result = resp.json()
     assert reset_request_result["details"] == "Password reset email sent"
