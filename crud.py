@@ -6,6 +6,9 @@ import models, schemas
 import bcrypt
 
 
+MINUTE = 60
+
+
 exercise_order_by_column = {
     schemas.ExerciseOrderBy.category: models.Exercise.category,
     schemas.ExerciseOrderBy.complexity: models.Exercise.complexity,
@@ -147,6 +150,7 @@ def update_exercise_completion(
     db_exercise: models.Exercise,
     completion: schemas.ExerciseCompletion,
 ):
+    updating = True
     db_do_exercise = (
         db.query(models.DoExercise)
         .filter(models.DoExercise.exercise_id == db_exercise.id)
@@ -154,6 +158,7 @@ def update_exercise_completion(
         .first()
     )
     if db_do_exercise is None:
+        updating = False
         db_do_exercise = models.DoExercise()
         db.add(db_do_exercise)
         db_user.exercises.append(db_do_exercise)
@@ -162,6 +167,17 @@ def update_exercise_completion(
     update_data.pop("user_id")
     for key in update_data:
         setattr(db_do_exercise, key, update_data[key])
+
+    if completion.position is not None and completion.time_spent:
+        wpm = completion.position / completion.time_spent * MINUTE
+        old_prof = db_user.proficiency
+        if old_prof is None:
+            old_prof = 0
+        ex_count = db_user.exercises.count() - updating
+        wpm_sum = old_prof * (ex_count)
+        wpm_sum += wpm
+        setattr(db_user, "proficiency", wpm_sum / (ex_count + 1))
+
     db.commit()
     db.refresh(db_do_exercise)
     return db_do_exercise
