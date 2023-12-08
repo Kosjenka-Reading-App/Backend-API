@@ -66,17 +66,17 @@ def test_regular_account_reset_password():
 
 
 def test_superadmin_account_reset_password():
-    email = {"email": "superadmin@gmail.com"}
+    email = {"email": "update@gmail.com"}
     resp = client.post(
         "http://localhost:8000/password/forgot",
         json=email,
     )
     assert resp.status_code == 200
     assert (
-        "An email has been sent to superadmin@gmail.com with a link for password reset."
+        "An email has been sent to update@gmail.com with a link for password reset."
         in resp.json()["result"]
     )
-    reset_token = createPasswortResetToken("superadmin@gmail.com", 6000)
+    reset_token = createPasswortResetToken("update@gmail.com", 6000)
     new_password_payload = {"password": "new_password_superadmin", "token": reset_token}
     reset_password_response = client.post(
         "http://localhost:8000/password/reset", json=new_password_payload
@@ -86,7 +86,7 @@ def test_superadmin_account_reset_password():
     assert reset_password_result["details"] == "Successfully updated password"
 
     login_json = {
-        "email": "superadmin@gmail.com",
+        "email": "update@gmail.com",
         "password": "new_password_superadmin",
     }
     login_respose = client.post("http://localhost:8000/login", json=login_json)
@@ -100,6 +100,6 @@ def test_superadmin_account_reset_password():
     assert reset_password_response.status_code == 200
     reset_password_result = reset_password_response.json()
     assert reset_password_result["details"] == "Successfully updated password"
-    login_json = {"email": "superadmin@gmail.com", "password": "superadmin"}
+    login_json = {"email": "update@gmail.com", "password": "superadmin"}
     login_respose = client.post("http://localhost:8000/login", json=login_json)
     assert login_respose.status_code == 200
