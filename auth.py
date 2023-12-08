@@ -18,6 +18,9 @@ JWT_VALID_TIME_REFRESH = int(
 JWT_VALID_TIME_PWD_RESET = int(
     os.environ["JWT_VALID_TIME_PWD_RESET"]
 )  # 60 * 10  # 10min
+JWT_VALID_TIME_ACTIVATE_ACCOUNT = int(
+    os.environ["JWT_VALID_TIME_ACTIVATE_ACCOUNT"]
+)
 JWT_SECRET = os.environ["JWT_SECRET"]  # "C0ddVvlcaL4UuChF8ckFQoVCGbtizyvK"
 JWT_ALGORITHM = os.environ["JWT_ALGORITHM"]  # "HS256"
 
@@ -158,15 +161,26 @@ def reset_password(db: Session, new_password: str, token: str):
         return "ERROR"
 
 # Admin Password set
-async def send_account_password_mail(account: models.Account):
-    token = createPasswortResetToken(
-        email=account.email, valid_time=JWT_VALID_TIME_PWD_RESET
+def create_account_activation_token(email: EmailStr, is_superadmin: bool, valid_time: int):
+    payload = {
+        "email": email,
+        "is_superadmin" : is_superadmin,
+        "expires": time.time() + valid_time,
+    }
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return token
+
+async def send_account_password_mail(account: schemas.AccountPostAdminIn):
+    token = create_account_activation_token(
+        email=account.email, 
+        is_superadmin=account.is_superadmin,
+        valid_time=JWT_VALID_TIME_ACTIVATE_ACCOUNT
     )
     link_base = os.environ["ACTIVATE_ACCOUNT_LINK"]
     template_body = {
         "user": account.email,
         "url": f"{link_base}?token={token}",
-        "expire_in_minutes": int(JWT_VALID_TIME_PWD_RESET / 60),
+        "expire_in_minutes": int(JWT_VALID_TIME_ACTIVATE_ACCOUNT / 60),
     }
     message = MessageSchema(
         subject="Kosjenka - Account Registration",
@@ -176,3 +190,12 @@ async def send_account_password_mail(account: models.Account):
     )
     fm = FastMail(conf)
     await fm.send_message(message, template_name="activate_account_email.html")
+
+def check_account_activation_token(token: str):
+    try:
+        decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if decoded_token["expires"] < time.time():
+            return None
+        return decoded_token
+    except:
+        return None
