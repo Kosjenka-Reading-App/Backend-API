@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from crud import password_hasher
 from database import SessionLocal
 from main import app
-from auth import createPasswortResetToken
+from auth import create_account_activation_token
 import models
 
 
@@ -27,21 +27,14 @@ def regular_token():
 @pytest.fixture(scope="session")
 def admin_token(superadmin_token):
     account_details = {"email": "admin@gmail.com", "password": "admin"}
-    activate = {"token": createPasswortResetToken("admin@gmail.com",60000), "password": "admin"}
+    activate = {"token": create_account_activation_token("admin@gmail.com",False,60000), "password": "admin"}
     resp = client.post("http://localhost:8000/login", json=account_details).json()
     if "detail" in resp and resp["detail"] == "Username/Password wrong":
-        resp = client.post(
-            "http://localhost:8000/accounts",
-            json=account_details,
-            headers=auth_header(superadmin_token),
-        ).json()
-        resp = client.post("http://localhost:8000/login", json=account_details).json()
-    if "detail" in resp and resp["detail"] == "Account not activated":
         resp = client.post(
             "http://localhost:8000/accounts/activate",
             json=activate
         ).json()
-        resp = client.post("http://localhost:8000/login", json=account_details).json()
+    resp = client.post("http://localhost:8000/login", json=account_details).json()
     access_token = resp["access_token"]
     yield access_token
 
