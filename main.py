@@ -507,7 +507,6 @@ async def send_password_mail(
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
 
 
-@app.post("/accounts/activate", response_model=schemas.ResetPasswordResultSchema)
 @app.post("/password/reset", response_model=schemas.ResetPasswordResultSchema)
 def account_reset_password_result(
     input: schemas.ResetPasswordSchema,
