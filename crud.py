@@ -221,10 +221,7 @@ def get_accounts(
 def create_account(
     db: Session, account_in: schemas.AccountIn, account_category: models.AccountType
 ):
-    if account_in.password == "TO_BE_SET":
-        hashed_password = "TO_BE_SET"
-    else:        
-        hashed_password = password_hasher(account_in.password)
+    hashed_password = password_hasher(account_in.password)
     account_db = models.Account(
         email=account_in.email,
         account_category=account_category,
