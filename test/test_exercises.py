@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 
-from conftest import client, auth_header
+from conftest import client, auth_header, create_exercise
 
 
 def test_create_exercise(admin_token):
@@ -141,6 +141,21 @@ def test_search_exercises(admin_token):
     ).json()["items"]
     for exercise in exercises:
         assert exercise["title"] == "Title of another exercise"
+
+
+def test_search_exercises_by_multiple_categories(admin_token, create_exercise):
+    created_exercise_id = create_exercise(categories=["alpha", "beta"])["id"]
+    exercises = client.get(
+        "http://localhost:8000/exercises?category=alpha_AND_beta",
+        headers=auth_header(admin_token),
+    ).json()["items"]
+    assert len(exercises) == 1
+    assert exercises[0]["id"] == created_exercise_id
+    exercises = client.get(
+        "http://localhost:8000/exercises?category=alhpa_AND_beta_AND_gamma",
+        headers=auth_header(admin_token),
+    ).json()["items"]
+    assert len(exercises) == 0
 
 
 def test_delete_exercise(admin_token):

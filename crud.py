@@ -50,7 +50,7 @@ def get_exercises(
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
-    category: models.Category | None = None,
+    categories: list[models.Category] | None = None,
     title_like: str | None = None,
     user_id: int | None = None,
 ):
@@ -58,8 +58,9 @@ def get_exercises(
     # first, filter the exercises by complexity, category and title
     if complexity:
         exercises = exercises.filter(models.Exercise.complexity == complexity)
-    if category:
-        exercises = exercises.filter(models.Exercise.category.contains(category))
+    if categories:
+        for category in categories:
+            exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
         exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
     # then, sort the exercises
