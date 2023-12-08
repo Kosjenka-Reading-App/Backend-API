@@ -444,8 +444,6 @@ def login(login: schemas.LoginSchema, db: Session = Depends(get_db)):
     auth_account = auth.get_user(db=db, login=login)
     if auth_account is None:
         raise HTTPException(status_code=400, detail="Username/Password wrong")
-    if auth_account == "NOT_ACTIVE":
-        raise HTTPException(status_code=400, detail="Account not activated")
     token = auth.generateToken(account=auth_account)
     return token
 

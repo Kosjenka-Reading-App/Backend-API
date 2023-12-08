@@ -69,8 +69,6 @@ def get_user(db: Session, login: schemas.LoginSchema):
     user = db.query(models.Account).filter(models.Account.email == login.email).first()
     if user == None:
         return None
-    if user.password == "TO_BE_SET":
-        return "NOT_ACTIVE"
     if not bcrypt.checkpw(
         login.password.encode("utf-8"), user.password.encode("utf-8")
     ):
