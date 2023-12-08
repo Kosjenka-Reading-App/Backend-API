@@ -169,8 +169,6 @@ def update_exercise_completion(
         setattr(db_do_exercise, key, update_data[key])
 
     if completion.position is not None and completion.time_spent:
-        if completion.time_spent == 0:
-            completion.time_spent = 1
         wpm = completion.position / completion.time_spent * MINUTE
         old_prof = db_user.proficiency
         if old_prof is None:
