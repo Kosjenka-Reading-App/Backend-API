@@ -2,6 +2,7 @@ from conftest import client, auth_header, good_request, bad_request
 
 from auth import createPasswortResetToken, create_account_activation_token
 
+
 def test_create_account(superadmin_token):
     accounts = client.get(
         "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
@@ -14,37 +15,37 @@ def test_create_account(superadmin_token):
         headers=auth_header(superadmin_token),
     )
     assert resp.status_code == 200
-    activate = {"token": create_account_activation_token("email@gmail.com",False,6000), "password": "secret"}
-    activate_result = client.post("http://localhost:8000/accounts/activate",
-        json=activate)
+    activate = {
+        "token": create_account_activation_token("email@gmail.com", False, 6000),
+        "password": "secret",
+    }
+    activate_result = client.post(
+        "http://localhost:8000/accounts/activate", json=activate
+    )
     assert activate_result.status_code == 200
     accounts = client.get(
         "http://localhost:8000/accounts", headers=auth_header(superadmin_token)
     ).json()
     assert len(accounts["items"]) == account_count + 1
 
+
 def test_activate_account():
     account = {"email": "activate@gmail.com", "password": "secret"}
-    resp = client.post(
-        "http://localhost:8000/login",
-        json=account
-    )
-    #Check if login is not possible
+    resp = client.post("http://localhost:8000/login", json=account)
+    # Check if login is not possible
     assert resp.status_code == 400
-    token = create_account_activation_token("activate@gmail.com",False, 6000)
-    activate = {"token": token, "password": "secret", }
-    
-    resp2 = client.post(
-        "http://localhost:8000/accounts/activate",
-        json=activate
-    )
+    token = create_account_activation_token("activate@gmail.com", False, 6000)
+    activate = {
+        "token": token,
+        "password": "secret",
+    }
+
+    resp2 = client.post("http://localhost:8000/accounts/activate", json=activate)
     assert resp2.status_code == 200
-    #Try to login again 
-    resp3 = client.post(
-        "http://localhost:8000/login",
-        json=account
-    )
+    # Try to login again
+    resp3 = client.post("http://localhost:8000/login", json=account)
     assert resp3.status_code == 200
+
 
 def test_update_account(superadmin_token):
     # Get the superadmin

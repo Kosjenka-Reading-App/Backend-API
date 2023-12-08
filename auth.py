@@ -18,9 +18,7 @@ JWT_VALID_TIME_REFRESH = int(
 JWT_VALID_TIME_PWD_RESET = int(
     os.environ["JWT_VALID_TIME_PWD_RESET"]
 )  # 60 * 10  # 10min
-JWT_VALID_TIME_ACTIVATE_ACCOUNT = int(
-    os.environ["JWT_VALID_TIME_ACTIVATE_ACCOUNT"]
-)
+JWT_VALID_TIME_ACTIVATE_ACCOUNT = int(os.environ["JWT_VALID_TIME_ACTIVATE_ACCOUNT"])
 JWT_SECRET = os.environ["JWT_SECRET"]  # "C0ddVvlcaL4UuChF8ckFQoVCGbtizyvK"
 JWT_ALGORITHM = os.environ["JWT_ALGORITHM"]  # "HS256"
 
@@ -160,21 +158,25 @@ def reset_password(db: Session, new_password: str, token: str):
     except:
         return "ERROR"
 
+
 # Admin Password set
-def create_account_activation_token(email: EmailStr, is_superadmin: bool, valid_time: int):
+def create_account_activation_token(
+    email: EmailStr, is_superadmin: bool, valid_time: int
+):
     payload = {
         "email": email,
-        "is_superadmin" : is_superadmin,
+        "is_superadmin": is_superadmin,
         "expires": time.time() + valid_time,
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token
 
+
 async def send_account_password_mail(account: schemas.AccountPostAdminIn):
     token = create_account_activation_token(
-        email=account.email, 
+        email=account.email,
         is_superadmin=account.is_superadmin,
-        valid_time=JWT_VALID_TIME_ACTIVATE_ACCOUNT
+        valid_time=JWT_VALID_TIME_ACTIVATE_ACCOUNT,
     )
     link_base = os.environ["ACTIVATE_ACCOUNT_LINK"]
     template_body = {
@@ -190,6 +192,7 @@ async def send_account_password_mail(account: schemas.AccountPostAdminIn):
     )
     fm = FastMail(conf)
     await fm.send_message(message, template_name="activate_account_email.html")
+
 
 def check_account_activation_token(token: str):
     try:

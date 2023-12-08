@@ -231,7 +231,7 @@ async def create_account(
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     validate_access_level(auth_user, models.AccountType.Superadmin)
-   
+
     try:
         await auth.send_account_password_mail(account=account_in)
         return {
@@ -240,6 +240,7 @@ async def create_account(
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
+
 
 @app.post("/accounts/activate", response_model=schemas.AccountOut)
 def account_reset_password_result(
@@ -260,7 +261,8 @@ def account_reset_password_result(
     new_account.password = input.password
     account_saved = crud.create_account(db, new_account, type_account)
     return account_saved
-   
+
+
 @app.post("/register", response_model=schemas.AccountOut)
 def register_account(account_in: schemas.AccountIn, db: Session = Depends(get_db)):
     if crud.email_is_registered(db, account_in.email):
@@ -452,7 +454,7 @@ def update_category(
 def login(login: schemas.LoginSchema, db: Session = Depends(get_db)):
     auth_account = auth.get_user(db=db, login=login)
     if auth_account is None:
-        raise HTTPException(status_code=400, detail="Username/Password wrong")    
+        raise HTTPException(status_code=400, detail="Username/Password wrong")
     if auth_account == "NOT_ACTIVE":
         raise HTTPException(status_code=400, detail="Account not activated")
     token = auth.generateToken(account=auth_account)
@@ -526,4 +528,3 @@ def account_reset_password_result(
 
 assert_first_super_admin()
 add_pagination(app)
-
