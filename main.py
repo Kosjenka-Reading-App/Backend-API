@@ -129,7 +129,7 @@ def read_exercises(
         validate_access_level(auth_user, models.AccountType.Regular)
         validate_user_belongs_to_account(user_id, auth_user, db)
     if category:
-        categories = category.split('_AND_')
+        categories = category.split("_AND_")
         db_categories = []
         for category in categories:
             db_cat = crud.get_category(db, category)
