@@ -14,7 +14,7 @@ env:
   JWT_SECRET: "secret"
   JWT_ALGORITHM: "HS256"
   MAIL_USERNAME: "kosjenka.readingapp@gmail.com"
-  MAIL_PASSWORD: "secret"
+  MAIL_PASSWORD: "${{ secrets.MAIL_PASSWORD }}"
   MAIL_PORT: 587
   MAIL_SERVER: "smtp.gmail.com"
   MAIL_FROM_NAME: "Kosjenka Support"
