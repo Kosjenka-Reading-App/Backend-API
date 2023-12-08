@@ -117,6 +117,7 @@ def read_exercises(
     complexity: models.Complexity | None = None,
     category: str | None = None,
     title_like: str | None = None,
+    case_sensitive: bool = False,
     user_id: int | None = None,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema | None = Depends(optional_auth),
@@ -141,6 +142,7 @@ def read_exercises(
         complexity=complexity,
         category=db_category,
         title_like=title_like,
+        case_sensitive=case_sensitive,
         user_id=user_id,
     )
     if user_id:
@@ -249,6 +251,7 @@ def get_all_accounts(
     order_by: schemas.AccountOrderBy | None = None,
     order: schemas.Order | None = None,
     email_like: str | None = None,
+    case_sensitive: bool = False,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
@@ -258,6 +261,7 @@ def get_all_accounts(
         order_by=order_by,
         order=order,
         email_like=email_like,
+        case_sensitive=case_sensitive,
     )
     return accounts
 
@@ -378,11 +382,14 @@ def create_category(
 def read_categories(
     order: schemas.Order | None = None,
     name_like: str | None = None,
+    case_sensitive: bool = False,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     validate_access_level(auth_user, models.AccountType.Regular)
-    db_categories = crud.get_categories(db, order=order, name_like=name_like)
+    db_categories = crud.get_categories(
+        db, order=order, name_like=name_like, case_sensitive=case_sensitive
+    )
     return db_categories
 
 
