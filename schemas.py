@@ -139,7 +139,7 @@ class MeSchema(BaseModel):
     account_category: str
 
 
-# Forget Password
+# Forget Password  
 class ForgetPasswordSchema(BaseModel):
     email: EmailStr
 
@@ -151,3 +151,8 @@ class ResetPasswordSchema(BaseModel):
 
 class ResetPasswordResultSchema(BaseModel):
     details: str
+
+#Activate Account 
+class ActivateAccountSchema(BaseModel):
+    password: str
+    token: str
