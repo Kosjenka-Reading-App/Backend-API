@@ -27,6 +27,72 @@ def test_track_exercise_completion_metrics(regular_token, create_user, create_ex
     assert exercise_resp["completion"]["position"] == 29
 
 
+def test_user_proficiency_metrics(regular_token, create_user, create_exercise):
+    created_user_id = create_user(regular_token)["id_user"]
+    exercise_one_id = create_exercise()["id"]
+    exercise_two_id = create_exercise()["id"]
+
+    exercise_completion = {
+        "user_id": created_user_id,
+        "completion": 45,
+        "time_spent": 100,
+        "position": 29,
+    }
+    good_request(
+        client.post,
+        f"http://localhost:8000/exercises/{exercise_one_id}/track_completion",
+        json=exercise_completion,
+        headers=auth_header(regular_token),
+    )
+    user_resp = good_request(
+        client.get,
+        f"http://localhost:8000/users/{created_user_id}",
+        headers=auth_header(regular_token),
+    )
+    assert user_resp["proficiency"] == 17.4
+
+    # no time spent does not affect proficiency
+    exercise_completion = {
+        "user_id": created_user_id,
+        "completion": 45,
+        "time_spent": 0,
+        "position": 29,
+    }
+    good_request(
+        client.post,
+        f"http://localhost:8000/exercises/{exercise_two_id}/track_completion",
+        json=exercise_completion,
+        headers=auth_header(regular_token),
+    )
+    user_resp = good_request(
+        client.get,
+        f"http://localhost:8000/users/{created_user_id}",
+        headers=auth_header(regular_token),
+    )
+    assert user_resp["proficiency"] == 17.4
+
+    # no time spent does not affect proficiency
+    exercise_completion = {
+        "user_id": created_user_id,
+        "completion": 45,
+        "time_spent": 50,
+        "position": 29,
+    }
+    good_request(
+        client.post,
+        f"http://localhost:8000/exercises/{exercise_two_id}/track_completion",
+        json=exercise_completion,
+        headers=auth_header(regular_token),
+    )
+    user_resp = good_request(
+        client.get,
+        f"http://localhost:8000/users/{created_user_id}",
+        headers=auth_header(regular_token),
+    )
+    assert round(user_resp["proficiency"], 1) == 26.1
+
+
+
 def test_track_multiple_users_per_exercise(regular_token, create_user, create_exercise):
     id_alice = create_user(regular_token)["id_user"]
     id_bob = create_user(regular_token)["id_user"]
