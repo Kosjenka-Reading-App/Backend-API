@@ -92,7 +92,6 @@ def test_user_proficiency_metrics(regular_token, create_user, create_exercise):
     assert round(user_resp["proficiency"], 1) == 26.1
 
 
-
 def test_track_multiple_users_per_exercise(regular_token, create_user, create_exercise):
     id_alice = create_user(regular_token)["id_user"]
     id_bob = create_user(regular_token)["id_user"]
