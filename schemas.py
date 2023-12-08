@@ -80,9 +80,11 @@ class AccountIn(BaseModel):
     email: EmailStr
     password: str
 
-class AccountPostAdminIn (BaseModel): 
+
+class AccountPostAdminIn(BaseModel):
     email: EmailStr
     is_superadmin: Optional[bool] = False
+
 
 class AccountPostAdmin(AccountIn):
     is_superadmin: Optional[bool] = False
@@ -138,7 +140,7 @@ class MeSchema(BaseModel):
     account_category: str
 
 
-# Forget Password  
+# Forget Password
 class ForgetPasswordSchema(BaseModel):
     email: EmailStr
 
@@ -151,7 +153,8 @@ class ResetPasswordSchema(BaseModel):
 class ResetPasswordResultSchema(BaseModel):
     details: str
 
-#Activate Account 
+
+# Activate Account
 class ActivateAccountSchema(BaseModel):
     password: str
     token: str
