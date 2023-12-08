@@ -52,6 +52,7 @@ def get_exercises(
     complexity: models.Complexity | None = None,
     categories: list[models.Category] | None = None,
     title_like: str | None = None,
+    case_sensitive: bool = False,
     user_id: int | None = None,
 ):
     exercises = select(models.Exercise)
@@ -62,7 +63,10 @@ def get_exercises(
         for category in categories:
             exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
-        exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+        if case_sensitive:
+            exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+        else:
+            exercises = exercises.filter(models.Exercise.title.ilike(f"%{title_like}%"))
     # then, sort the exercises
     if order_by:
         # sort by completion (completion is in DoExercise table)
@@ -234,6 +238,7 @@ def get_accounts(
     order_by: schemas.AccountOrderBy | None = None,
     order: schemas.Order | None = None,
     email_like: str | None = None,
+    case_sensitive: bool = False,
 ):
     accounts = select(models.Account).filter(
         or_(
@@ -242,7 +247,10 @@ def get_accounts(
         )
     )
     if email_like:
-        accounts = accounts.filter(models.Account.email.like(f"%{email_like}%"))
+        if case_sensitive:
+            accounts = accounts.filter(models.Account.email.like(f"%{email_like}%"))
+        else:
+            accounts = accounts.filter(models.Account.email.ilike(f"%{email_like}%"))
     if order_by:
         accounts = accounts.order_by(
             account_order_by_column[order_by].desc()
@@ -332,10 +340,19 @@ def get_categories(
     db: Session,
     order: schemas.Order | None,
     name_like: str | None,
+    case_sensitive: bool = False,
 ):
     categories = select(models.Category)
     if name_like:
-        categories = categories.filter(models.Category.category.like(f"%{name_like}%"))
+        print(name_like)
+        if case_sensitive:
+            categories = categories.filter(
+                models.Category.category.like(f"%{name_like}%")
+            )
+        else:
+            categories = categories.filter(
+                models.Category.category.ilike(f"%{name_like}%")
+            )
     if order:
         categories = categories.order_by(
             models.Category.category.desc()
