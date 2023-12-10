@@ -123,11 +123,12 @@ def create_user():
 def create_exercise(admin_token):
     exercise_ids = []
 
-    def new_exercise():
+    def new_exercise(categories=[]):
         nonlocal exercise_ids
         new_exercise = {
             "title": "Exercise to be deleted after the test",
             "text": "sample text",
+            "category": categories,
         }
         exercise_resp = good_request(
             client.post,

@@ -6,11 +6,15 @@ import models, schemas
 import bcrypt
 
 
+MINUTE = 60
+
+
 exercise_order_by_column = {
     schemas.ExerciseOrderBy.category: models.Exercise.category,
     schemas.ExerciseOrderBy.complexity: models.Exercise.complexity,
     schemas.ExerciseOrderBy.title: models.Exercise.title,
     schemas.ExerciseOrderBy.date: models.Exercise.date,
+    schemas.ExerciseOrderBy.completion: models.DoExercise.completion,
 }
 
 
@@ -46,30 +50,51 @@ def get_exercises(
     order_by: schemas.ExerciseOrderBy | None = None,
     order: schemas.Order | None = None,
     complexity: models.Complexity | None = None,
-    category: models.Category | None = None,
+    categories: list[models.Category] | None = None,
     title_like: str | None = None,
+    case_sensitive: bool = False,
     user_id: int | None = None,
 ):
     exercises = select(models.Exercise)
+    # first, filter the exercises by complexity, category and title
     if complexity:
         exercises = exercises.filter(models.Exercise.complexity == complexity)
-    if category:
-        exercises = exercises.filter(models.Exercise.category.contains(category))
+    if categories:
+        for category in categories:
+            exercises = exercises.filter(models.Exercise.category.contains(category))
     if title_like:
-        exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+        if case_sensitive:
+            exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+        else:
+            exercises = exercises.filter(models.Exercise.title.ilike(f"%{title_like}%"))
+    # then, sort the exercises
+    if order_by:
+        # sort by completion (completion is in DoExercise table)
+        if order_by == schemas.ExerciseOrderBy.completion:
+            exercises = (
+                select(models.Exercise)
+                .join(models.DoExercise)
+                .filter(models.DoExercise.user_id == user_id)
+            )
+            exercises = exercises.order_by(
+                exercise_order_by_column[order_by].desc()
+                if order == schemas.Order.desc
+                else exercise_order_by_column[order_by]
+            )
+        # sort with elements in exercise's table
+        else:
+            exercises = exercises.order_by(
+                exercise_order_by_column[order_by].desc()
+                if order == schemas.Order.desc
+                else exercise_order_by_column[order_by]
+            )
+    # if the id of a user is given then add the completion of the specific user
     if user_id:
         exercises = (
-            exercises.join(models.DoExercise, isouter=True)
-            .add_columns(models.DoExercise)
-            .filter(or_(models.DoExercise.user_id == 1, models.Exercise.users == None))
+            exercises.add_columns(models.DoExercise)
+            .filter(models.DoExercise.user_id == user_id)
+            .filter(models.DoExercise.exercise_id == models.Exercise.id)
         )
-    if order_by:
-        exercises = exercises.order_by(
-            exercise_order_by_column[order_by].desc()
-            if order == schemas.Order.desc
-            else exercise_order_by_column[order_by]
-        )
-    if user_id:
         ex_with_completion = []
         for ex, do_ex in db.execute(exercises):
             if do_ex:
@@ -130,6 +155,7 @@ def update_exercise_completion(
     db_exercise: models.Exercise,
     completion: schemas.ExerciseCompletion,
 ):
+    updating = True
     db_do_exercise = (
         db.query(models.DoExercise)
         .filter(models.DoExercise.exercise_id == db_exercise.id)
@@ -137,6 +163,7 @@ def update_exercise_completion(
         .first()
     )
     if db_do_exercise is None:
+        updating = False
         db_do_exercise = models.DoExercise()
         db.add(db_do_exercise)
         db_user.exercises.append(db_do_exercise)
@@ -145,6 +172,17 @@ def update_exercise_completion(
     update_data.pop("user_id")
     for key in update_data:
         setattr(db_do_exercise, key, update_data[key])
+
+    if completion.position is not None and completion.time_spent:
+        wpm = completion.position / completion.time_spent * MINUTE
+        old_prof = db_user.proficiency
+        if old_prof is None:
+            old_prof = 0
+        ex_count = db_user.exercises.count() - updating
+        wpm_sum = old_prof * (ex_count)
+        wpm_sum += wpm
+        setattr(db_user, "proficiency", wpm_sum / (ex_count + 1))
+
     db.commit()
     db.refresh(db_do_exercise)
     return db_do_exercise
@@ -200,6 +238,7 @@ def get_accounts(
     order_by: schemas.AccountOrderBy | None = None,
     order: schemas.Order | None = None,
     email_like: str | None = None,
+    case_sensitive: bool = False,
 ):
     accounts = select(models.Account).filter(
         or_(
@@ -208,7 +247,10 @@ def get_accounts(
         )
     )
     if email_like:
-        accounts = accounts.filter(models.Account.email.like(f"%{email_like}%"))
+        if case_sensitive:
+            accounts = accounts.filter(models.Account.email.like(f"%{email_like}%"))
+        else:
+            accounts = accounts.filter(models.Account.email.ilike(f"%{email_like}%"))
     if order_by:
         accounts = accounts.order_by(
             account_order_by_column[order_by].desc()
@@ -298,10 +340,19 @@ def get_categories(
     db: Session,
     order: schemas.Order | None,
     name_like: str | None,
+    case_sensitive: bool = False,
 ):
     categories = select(models.Category)
     if name_like:
-        categories = categories.filter(models.Category.category.like(f"%{name_like}%"))
+        print(name_like)
+        if case_sensitive:
+            categories = categories.filter(
+                models.Category.category.like(f"%{name_like}%")
+            )
+        else:
+            categories = categories.filter(
+                models.Category.category.ilike(f"%{name_like}%")
+            )
     if order:
         categories = categories.order_by(
             models.Category.category.desc()
