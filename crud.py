@@ -1,4 +1,4 @@
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 from fastapi_pagination.ext.sqlalchemy import paginate
 
@@ -56,24 +56,13 @@ def get_exercises(
     user_id: int | None = None,
 ):
     exercises = select(models.Exercise)
-    # first, filter the exercises by complexity, category and title
-    if complexity:
-        exercises = exercises.filter(models.Exercise.complexity == complexity)
-    if categories:
-        for category in categories:
-            exercises = exercises.filter(models.Exercise.category.contains(category))
-    if title_like:
-        if case_sensitive:
-            exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
-        else:
-            exercises = exercises.filter(models.Exercise.title.ilike(f"%{title_like}%"))
     # then, sort the exercises
     if order_by:
         # sort by completion (completion is in DoExercise table)
         if order_by == schemas.ExerciseOrderBy.completion:
             assert(user_id)
             exercises = (
-                select(models.Exercise)
+                exercises
                 .outerjoin(models.DoExercise, models.Exercise.id == models.DoExercise.exercise_id)
                 .filter(models.DoExercise.user_id == user_id)
             )
@@ -90,6 +79,16 @@ def get_exercises(
                 if order == schemas.Order.desc
                 else exercise_order_by_column[order_by]
             )
+    if complexity:
+        exercises = exercises.filter(models.Exercise.complexity == complexity)
+    if categories:
+        for category in categories:
+            exercises = exercises.filter(models.Exercise.category.contains(category))
+    if title_like:
+        if case_sensitive:
+            exercises = exercises.filter(models.Exercise.title.like(f"%{title_like}%"))
+        else:
+            exercises = exercises.filter(models.Exercise.title.ilike(f"%{title_like}%"))
     # if the id of a user is given then add the completion of the specific user
     if user_id:
         exercises = (
