@@ -71,9 +71,10 @@ def get_exercises(
     if order_by:
         # sort by completion (completion is in DoExercise table)
         if order_by == schemas.ExerciseOrderBy.completion:
+            assert(user_id)
             exercises = (
                 select(models.Exercise)
-                .join(models.DoExercise)
+                .outerjoin(models.DoExercise, models.Exercise.id == models.DoExercise.exercise_id)
                 .filter(models.DoExercise.user_id == user_id)
             )
             exercises = exercises.order_by(
@@ -83,6 +84,7 @@ def get_exercises(
             )
         # sort with elements in exercise's table
         else:
+            assert(not user_id)
             exercises = exercises.order_by(
                 exercise_order_by_column[order_by].desc()
                 if order == schemas.Order.desc
