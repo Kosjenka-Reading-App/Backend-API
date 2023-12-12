@@ -217,6 +217,10 @@ def test_sort_completion(regular_token, create_user, create_exercise):
     exercise_id1 = create_exercise()["id"]
     exercise_id2 = create_exercise()["id"]
     exercise_id3 = create_exercise()["id"]
+    # Create an exercise without adding completion to
+    # check that an exercise not already started 
+    # returns completion 0
+    exercise_id4 = create_exercise()["id"]
 
     exercise_completion1 = {
         "user_id": created_user_id,
@@ -232,7 +236,7 @@ def test_sort_completion(regular_token, create_user, create_exercise):
     }
     exercise_completion3 = {
         "user_id": created_user_id,
-        "completion": 0,
+        "completion": 5,
         "time_spent": 100,
         "position": 29,
     }
@@ -280,3 +284,4 @@ def test_sort_completion(regular_token, create_user, create_exercise):
     for exercise in exercises:
         completions.append(exercise["completion"]["completion"])
     assert completions == sorted(completions)[::-1]
+    assert 0 in completions
