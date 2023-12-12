@@ -62,9 +62,7 @@ class Exercise(Base):
     title = Column(String)
     complexity = Column(Enum(Complexity), nullable=True)
     text = Column(String)
-    category = relationship(
-        "Category", secondary=exercise_category, back_populates="exercises"
-    )
+    category = relationship("Category", secondary=exercise_category)
     users = relationship("DoExercise", back_populates="exercise", lazy="dynamic")
     date = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -94,4 +92,6 @@ class Category(Base):
     __tablename__ = "category"
 
     category = Column(String, primary_key=True)
-    exercises = relationship("Exercise", secondary=exercise_category)
+    exercises = relationship(
+        "Exercise", secondary=exercise_category, back_populates="category"
+    )

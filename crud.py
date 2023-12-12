@@ -386,12 +386,25 @@ def delete_category(db: Session, category: str):
 
 
 def update_category(db: Session, old_category: str, new_category: schemas.Category):
+    stored_new_category = (
+        db.query(models.Category)
+        .filter(models.Category.category == new_category.category)
+        .first()
+    )
     stored_category = (
         db.query(models.Category)
         .filter(models.Category.category == old_category)
         .first()
     )
-    setattr(stored_category, "category", new_category.category)
+    exs_with_old_category = stored_category.exercises
+
+    if not stored_new_category:
+        setattr(stored_category, "category", new_category.category)
+    else:
+        db.delete(stored_category)
     db.commit()
-    db.refresh(stored_category)
+
+    for ex in exs_with_old_category:
+        ex.category.append(stored_new_category or stored_category)
+    db.commit()
     return stored_category

@@ -1,6 +1,6 @@
 import pytest
 
-from conftest import client, auth_header
+from conftest import client, auth_header, good_request
 
 
 @pytest.mark.parametrize("category_name", ["Dogs", "Cats"])
@@ -214,3 +214,38 @@ def test_patch_nonexistent_category(admin_token):
     )
     assert resp.status_code == 404
     assert resp.json()["detail"] == "category not found"
+
+
+def test_patch_category_updates_linked_exercises(create_exercise, admin_token):
+    ex_wood_id = create_exercise(categories=["wood"])["id"]
+    patch_category = {"category": "stone"}
+    good_request(
+        client.patch,
+        "http://localhost:8000/categories/wood",
+        headers=auth_header(admin_token),
+        json=patch_category,
+    )
+    ex = good_request(client.get, f"http://localhost:8000/exercises/{ex_wood_id}")
+    assert ex["category"][0]["category"] == "stone"
+    good_request(
+        client.delete,
+        "http://localhost:8000/categories/stone",
+        headers=auth_header(admin_token),
+    )
+
+
+def test_patch_category_to_existing_category(create_exercise, admin_token):
+    create_exercise(categories=["wood"])["id"]
+    create_exercise(categories=["stone"])["id"]
+    patch_category = {"category": "stone"}
+    good_request(
+        client.patch,
+        "http://localhost:8000/categories/wood",
+        headers=auth_header(admin_token),
+        json=patch_category,
+    )
+    good_request(
+        client.delete,
+        "http://localhost:8000/categories/stone",
+        headers=auth_header(admin_token),
+    )
