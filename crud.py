@@ -207,7 +207,7 @@ def get_account(db: Session, auth_user: schemas.AuthSchema, account_id: int):
             db.query(models.Account)
             .filter(
                 models.Account.id_account == account_id,
-                models.Account.account_category == models.AccountType.Admin,
+                models.Account.account_category != models.AccountType.Regular,
             )
             .first()
         )

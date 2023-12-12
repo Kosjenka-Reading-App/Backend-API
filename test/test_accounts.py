@@ -192,7 +192,7 @@ def test_update_account_invalid_email(superadmin_token):
     assert resp.status_code == 422  # Expecting a validation error
 
 
-def test_update_account_invalid_email(superadmin_token):
+def test_update_non_existent_account(superadmin_token):
     # Try updating a non-existent account
     non_existent_account_id = 999999  # Assuming this ID doesn't exist
     resp = client.patch(
@@ -201,3 +201,23 @@ def test_update_account_invalid_email(superadmin_token):
         headers=auth_header(superadmin_token),
     )
     assert resp.status_code == 404  # Expecting a not found error
+
+
+def test_delete_superadmin_account(superadmin_token):
+    new_admin = {
+        "email": "new_admin@mail.com",
+        "password": "some_password",
+        "is_superadmin": True,
+    }
+    new_admin_resp = good_request(
+        client.post,
+        "http://localhost:8000/accounts",
+        headers=auth_header(superadmin_token),
+        json=new_admin,
+    )
+    id_account = new_admin_resp["id_account"]
+    good_request(
+        client.delete,
+        f"http://localhost:8000/accounts/{id_account}",
+        headers=auth_header(superadmin_token),
+    )
