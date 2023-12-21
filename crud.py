@@ -1,4 +1,4 @@
-from sqlalchemy import func, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 from fastapi_pagination.ext.sqlalchemy import paginate
 
