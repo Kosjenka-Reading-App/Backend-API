@@ -180,7 +180,7 @@ async def send_account_password_mail(account: schemas.AccountPostAdminIn):
     template_body = {
         "user": account.email,
         "url": f"{link_base}?token={token}",
-        "expire_in_minutes": int(JWT_VALID_TIME_ACTIVATE_ACCOUNT / 60),
+        "expire_in_hours": int(JWT_VALID_TIME_ACTIVATE_ACCOUNT / 60 / 60),
     }
     message = MessageSchema(
         subject="Kosjenka - Account Registration",
