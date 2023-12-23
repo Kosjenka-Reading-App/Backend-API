@@ -234,7 +234,6 @@ def test_update_non_existent_account(superadmin_token):
 def test_delete_superadmin_account(superadmin_token):
     new_admin = {
         "email": "new_admin@mail.com",
-        "password": "some_password",
         "is_superadmin": True,
     }
     new_admin_resp = good_request(
@@ -243,7 +242,16 @@ def test_delete_superadmin_account(superadmin_token):
         headers=auth_header(superadmin_token),
         json=new_admin,
     )
-    id_account = new_admin_resp["id_account"]
+    activate = {
+        "token": create_account_activation_token("new_admin@mail.com", True, 6000),
+        "password": "new_passwrd",
+    }
+    activate_result = client.post(
+        "http://localhost:8000/accounts/activate", json=activate
+    )
+    assert activate_result.status_code == 200  
+    activate_result_json = activate_result.json()
+    id_account = activate_result_json["id_account"]
     good_request(
         client.delete,
         f"http://localhost:8000/accounts/{id_account}",
