@@ -249,7 +249,7 @@ def test_delete_superadmin_account(superadmin_token):
     activate_result = client.post(
         "http://localhost:8000/accounts/activate", json=activate
     )
-    assert activate_result.status_code == 200  
+    assert activate_result.status_code == 200
     activate_result_json = activate_result.json()
     id_account = activate_result_json["id_account"]
     good_request(
