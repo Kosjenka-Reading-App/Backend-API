@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+POST,/exercises/<id>/track_completion,HTTPError('404 Client Error: Not Found for url: /exercises/<id>/track_completion'),29
+GET,/exercises?order_by=completion&user_id=<user_id>,HTTPError('404 Client Error: Not Found for url: /exercises?order_by=completion&user_id=<user_id>'),18

@@ -1,0 +1,11 @@
+volumes:
+  psql:
+services:
+  psql:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+    ports:
+      - 5555:5432
+
