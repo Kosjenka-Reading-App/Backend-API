@@ -224,21 +224,42 @@ def track_exercise_completion(
     return db_do_exercise
 
 
-@app.post("/accounts", response_model=schemas.AccountOut)
-def create_account(
-    account_in: schemas.AccountPostAdmin,
+@app.post("/accounts")
+async def create_account(
+    account_in: schemas.AccountPostAdminIn,
     db: Session = Depends(get_db),
     auth_user: schemas.AuthSchema = Depends(JWTBearer()),
 ):
     validate_access_level(auth_user, models.AccountType.Superadmin)
-    if crud.email_is_registered(db, account_in.email):
-        raise HTTPException(status_code=409, detail="Email already registered")
 
-    if account_in.is_superadmin:
+    try:
+        await auth.send_account_password_mail(account=account_in)
+        return {
+            "result": f"An email has been sent to {account_in.email} with a link for activating the account."
+        }
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred")
+
+
+@app.post("/accounts/activate", response_model=schemas.AccountOut)
+def account_reset_password_result(
+    input: schemas.ActivateAccountSchema,
+    db: Session = Depends(get_db),
+):
+    result = auth.check_account_activation_token(input.token)
+    if result == None:
+        raise HTTPException(status_code=401, detail="Token is expired or not valid")
+    if crud.email_is_registered(db, result["email"]):
+        raise HTTPException(status_code=409, detail="Email already registered")
+    if result["is_superadmin"]:
         type_account = models.AccountType.Superadmin
     else:
         type_account = models.AccountType.Admin
-    account_saved = crud.create_account(db, account_in, type_account)
+    new_account = schemas.AccountPostAdmin
+    new_account.email = result["email"]
+    new_account.password = input.password
+    account_saved = crud.create_account(db, new_account, type_account)
     return account_saved
 
 
