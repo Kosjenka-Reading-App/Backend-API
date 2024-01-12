@@ -125,7 +125,7 @@ def read_exercises(
     if user_id:
         if not auth_user:
             raise HTTPException(
-                status_code=403, detail="account must be authorized to access user data"
+                status_code=401, detail="account must be authorized to access user data"
             )
         validate_access_level(auth_user, models.AccountType.Regular)
         validate_user_belongs_to_account(user_id, auth_user, db)
@@ -164,7 +164,7 @@ def read_exercise(
     if user_id:
         if not auth_user:
             raise HTTPException(
-                status_code=403, detail="account must be authorized to access user data"
+                status_code=401, detail="account must be authorized to access user data"
             )
         validate_access_level(auth_user, models.AccountType.Regular)
         validate_user_belongs_to_account(user_id, auth_user, db)
@@ -463,9 +463,9 @@ def login(login: schemas.LoginSchema, db: Session = Depends(get_db)):
 def refresh(token: schemas.RefreshSchema):
     decoded_token = auth.decodeJWT(token=token.refresh_token)
     if decoded_token is None:
-        raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+        raise HTTPException(status_code=401, detail="Invalid token or expired token.")
     if decoded_token.is_access_token != False:
-        raise HTTPException(status_code=403, detail="Invalid token or expired token.")
+        raise HTTPException(status_code=401, detail="Invalid token or expired token.")
     refresh_token = auth.generate_refresh_token(
         old_token=token.refresh_token, decoded_token=decoded_token
     )
