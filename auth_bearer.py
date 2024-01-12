@@ -15,19 +15,19 @@ class JWTBearer(HTTPBearer):
         if credentials:
             if not credentials.scheme == "Bearer":
                 raise HTTPException(
-                    status_code=403, detail="Invalid authentication scheme."
+                    status_code=401, detail="Invalid authentication scheme."
                 )
             token = auth.decodeJWT(credentials.credentials)
             if token == None:
                 raise HTTPException(
-                    status_code=403, detail="Invalid token or expired token."
+                    status_code=401, detail="Invalid token or expired token."
                 )
             if token.is_access_token != True:
                 raise HTTPException(
-                    status_code=403, detail="Invalid token or expired token."
+                    status_code=401, detail="Invalid token or expired token."
                 )
             return token
         elif not self.auto_error:
             return None
         else:
-            raise HTTPException(status_code=403, detail="Invalid authorization code.")
+            raise HTTPException(status_code=401, detail="Invalid authorization code.")
